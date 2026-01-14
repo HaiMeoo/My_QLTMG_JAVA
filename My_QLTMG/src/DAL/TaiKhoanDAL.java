@@ -249,6 +249,30 @@ public class TaiKhoanDAL {
         return taiKhoanList;
     }
     
+    public List<TaiKhoanDTO> timKiemTheoMaHoacTen(String key) {
+        List<TaiKhoanDTO> list = new ArrayList<>();
+        String sql = "SELECT * FROM TAIKHOAN WHERE IDTAIKHOAN LIKE ? OR TENTAIKHOAN LIKE ?";
+
+        try {
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, "%" + key + "%");
+            ps.setString(2, "%" + key + "%");
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new TaiKhoanDTO(
+                    rs.getString("IDTAIKHOAN"),
+                    rs.getString("TENTAIKHOAN"),
+                    rs.getString("MATKHAU")
+                ));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    
     /**
      * Lấy tổng số tài khoản
      */

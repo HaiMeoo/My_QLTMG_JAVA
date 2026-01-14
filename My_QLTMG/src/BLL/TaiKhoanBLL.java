@@ -5,169 +5,156 @@ import DAL.TaiKhoanDAL;
 import DTO.TaiKhoanDTO;
 
 public class TaiKhoanBLL {
+
     private TaiKhoanDAL taiKhoanDAL;
-    
+
     public TaiKhoanBLL() {
         taiKhoanDAL = new TaiKhoanDAL();
     }
-    
-    /**
-     * Lấy danh sách tất cả tài khoản
-     */
+
+    /* =========================
+       LẤY DANH SÁCH
+    ========================= */
     public List<TaiKhoanDTO> getTaiKhoanList() {
-        List<TaiKhoanDTO> taiKhoanList = taiKhoanDAL.getAllTaiKhoan();
-        
-        if (taiKhoanList == null || taiKhoanList.isEmpty()) {
-            System.out.println("Danh sách tài khoản trống.");
-        }
-        
-        return taiKhoanList;
+        return taiKhoanDAL.getAllTaiKhoan();
     }
-    
-    /**
-     * Đăng nhập
-     */
+
+    /* =========================
+       ĐĂNG NHẬP
+    ========================= */
     public boolean dangNhap(String username, String password) {
-        if (username == null || username.trim().isEmpty() || 
-            password == null || password.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tài khoản và mật khẩu không được để trống.");
-        }
-        
-        return taiKhoanDAL.login(username, password);
+
+        if (username == null || username.trim().isEmpty())
+            throw new IllegalArgumentException("Tên tài khoản không được để trống");
+
+        if (password == null || password.trim().isEmpty())
+            throw new IllegalArgumentException("Mật khẩu không được để trống");
+
+        return taiKhoanDAL.login(username.trim(), password.trim());
     }
-    
-    /**
-     * Thêm tài khoản mới
-     */
-    public boolean themTaiKhoan(String idTaiKhoan, String tenTaiKhoan, String matKhau) {
-        if (idTaiKhoan == null || idTaiKhoan.trim().isEmpty() || 
-            tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty() || 
-            matKhau == null || matKhau.trim().isEmpty()) {
-            throw new IllegalArgumentException("Thông tin tài khoản không được để trống.");
-        }
-        
-        return taiKhoanDAL.addTaiKhoan(idTaiKhoan, tenTaiKhoan, matKhau);
+
+    /* =========================
+       THÊM TÀI KHOẢN
+    ========================= */
+    public void themTaiKhoan(String id, String ten, String matKhau) {
+
+        if (id == null || id.trim().isEmpty())
+            throw new IllegalArgumentException("Mã tài khoản không được để trống");
+
+        if (ten == null || ten.trim().isEmpty())
+            throw new IllegalArgumentException("Tên tài khoản không được để trống");
+
+        if (matKhau == null || matKhau.trim().isEmpty())
+            throw new IllegalArgumentException("Mật khẩu không được để trống");
+
+        if (taiKhoanDAL.isIdTaiKhoanExists(id))
+            throw new IllegalArgumentException("Mã tài khoản đã tồn tại");
+
+        if (taiKhoanDAL.isTenTaiKhoanExists(ten))
+            throw new IllegalArgumentException("Tên tài khoản đã tồn tại");
+
+        taiKhoanDAL.addTaiKhoan(id.trim(), ten.trim(), matKhau.trim());
     }
-    
-    /**
-     * Thêm tài khoản mới từ DTO
-     */
-    public boolean themTaiKhoan(TaiKhoanDTO taiKhoan) {
-        if (taiKhoan == null) {
-            throw new IllegalArgumentException("Đối tượng tài khoản không được null.");
-        }
-        
-        return taiKhoanDAL.addTaiKhoan(taiKhoan);
+
+    public void themTaiKhoan(TaiKhoanDTO tk) {
+
+        if (tk == null)
+            throw new IllegalArgumentException("Dữ liệu tài khoản không hợp lệ");
+
+        themTaiKhoan(
+                tk.getIdTaiKhoan(),
+                tk.getTenTaiKhoan(),
+                tk.getMatKhau()
+        );
     }
-    
-    /**
-     * Xóa tài khoản
-     */
-    public boolean xoaTaiKhoan(String idTaiKhoan) {
-        if (idTaiKhoan == null || idTaiKhoan.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mã tài khoản không được để trống.");
-        }
-        
-        return taiKhoanDAL.deleteTaiKhoan(idTaiKhoan);
+
+    /* =========================
+       SỬA TÀI KHOẢN
+    ========================= */
+    public void suaTaiKhoan(String id, String ten, String matKhau) {
+
+        if (id == null || id.trim().isEmpty())
+            throw new IllegalArgumentException("Chưa chọn tài khoản cần sửa");
+
+        if (ten == null || ten.trim().isEmpty())
+            throw new IllegalArgumentException("Tên tài khoản không được để trống");
+
+        if (matKhau == null || matKhau.trim().isEmpty())
+            throw new IllegalArgumentException("Mật khẩu không được để trống");
+
+        taiKhoanDAL.updateTaiKhoan(id.trim(), ten.trim(), matKhau.trim());
     }
-    
-    /**
-     * Sửa tài khoản
-     */
-    public boolean suaTaiKhoan(String idTaiKhoan, String tenTaiKhoan, String matKhau) {
-        if (idTaiKhoan == null || idTaiKhoan.trim().isEmpty() || 
-            tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty() || 
-            matKhau == null || matKhau.trim().isEmpty()) {
-            throw new IllegalArgumentException("Thông tin tài khoản không được để trống.");
-        }
-        
-        return taiKhoanDAL.updateTaiKhoan(idTaiKhoan, tenTaiKhoan, matKhau);
+
+    public void suaTaiKhoan(TaiKhoanDTO tk) {
+
+        if (tk == null)
+            throw new IllegalArgumentException("Dữ liệu tài khoản không hợp lệ");
+
+        suaTaiKhoan(
+                tk.getIdTaiKhoan(),
+                tk.getTenTaiKhoan(),
+                tk.getMatKhau()
+        );
     }
-    
-    /**
-     * Sửa tài khoản từ DTO
-     */
-    public boolean suaTaiKhoan(TaiKhoanDTO taiKhoan) {
-        if (taiKhoan == null) {
-            throw new IllegalArgumentException("Đối tượng tài khoản không được null.");
-        }
-        
-        return taiKhoanDAL.updateTaiKhoan(taiKhoan);
+
+    /* =========================
+       XÓA TÀI KHOẢN
+    ========================= */
+    public void xoaTaiKhoan(String id) {
+
+        if (id == null || id.trim().isEmpty())
+            throw new IllegalArgumentException("Chưa chọn tài khoản cần xóa");
+
+        taiKhoanDAL.deleteTaiKhoan(id.trim());
     }
-    
-    /**
-     * Lấy tài khoản theo ID
-     */
-    public TaiKhoanDTO getTaiKhoanById(String idTaiKhoan) {
-        if (idTaiKhoan == null || idTaiKhoan.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mã tài khoản không được để trống.");
-        }
-        
-        return taiKhoanDAL.getTaiKhoanById(idTaiKhoan);
+
+    /* =========================
+       LẤY THEO ID
+    ========================= */
+    public TaiKhoanDTO getTaiKhoanById(String id) {
+
+        if (id == null || id.trim().isEmpty())
+            throw new IllegalArgumentException("Mã tài khoản không hợp lệ");
+
+        return taiKhoanDAL.getTaiKhoanById(id.trim());
     }
-    
-    /**
-     * Kiểm tra tên tài khoản đã tồn tại chưa
-     */
-    public boolean isTenTaiKhoanExists(String tenTaiKhoan) {
-        if (tenTaiKhoan == null || tenTaiKhoan.trim().isEmpty()) {
-            throw new IllegalArgumentException("Tên tài khoản không được để trống.");
-        }
-        
-        return taiKhoanDAL.isTenTaiKhoanExists(tenTaiKhoan);
+
+    /* =========================
+       TÌM KIẾM (MÃ + TÊN)
+    ========================= */
+    public List<TaiKhoanDTO> timKiemTaiKhoan(String keyword) {
+
+        if (keyword == null || keyword.trim().isEmpty())
+            throw new IllegalArgumentException("Vui lòng nhập mã hoặc tên tài khoản");
+
+        return taiKhoanDAL.timKiemTheoMaHoacTen(keyword.trim());
     }
-    
-    /**
-     * Kiểm tra ID tài khoản đã tồn tại chưa
-     */
-    public boolean isIdTaiKhoanExists(String idTaiKhoan) {
-        if (idTaiKhoan == null || idTaiKhoan.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mã tài khoản không được để trống.");
-        }
-        
-        return taiKhoanDAL.isIdTaiKhoanExists(idTaiKhoan);
+
+    /* =========================
+       ĐỔI MẬT KHẨU
+    ========================= */
+    public void doiMatKhau(String id, String matKhauMoi) {
+
+        if (id == null || id.trim().isEmpty())
+            throw new IllegalArgumentException("Mã tài khoản không hợp lệ");
+
+        if (matKhauMoi == null || matKhauMoi.trim().isEmpty())
+            throw new IllegalArgumentException("Mật khẩu mới không được để trống");
+
+        taiKhoanDAL.changePassword(id.trim(), matKhauMoi.trim());
     }
-    
-    /**
-     * Đổi mật khẩu
-     */
-    public boolean doiMatKhau(String idTaiKhoan, String matKhauMoi) {
-        if (idTaiKhoan == null || idTaiKhoan.trim().isEmpty() || 
-            matKhauMoi == null || matKhauMoi.trim().isEmpty()) {
-            throw new IllegalArgumentException("Mã tài khoản và mật khẩu mới không được để trống.");
-        }
-        
-        return taiKhoanDAL.changePassword(idTaiKhoan, matKhauMoi);
-    }
-    
-    /**
-     * Tìm kiếm tài khoản theo tên
-     */
-    public List<TaiKhoanDTO> timKiemTaiKhoan(String tuKhoa) {
-        if (tuKhoa == null) {
-            tuKhoa = "";
-        }
-        
-        return taiKhoanDAL.searchTaiKhoanByTen(tuKhoa.trim());
-    }
-    
-    /**
-     * Lấy tổng số tài khoản
-     */
+
+    /* =========================
+       THỐNG KÊ – HỆ THỐNG
+    ========================= */
     public int getTongSoTaiKhoan() {
         return taiKhoanDAL.getTotalTaiKhoan();
     }
-    
-    /**
-     * Kiểm tra kết nối database
-     */
+
     public boolean kiemTraKetNoi() {
         return taiKhoanDAL.testConnection();
     }
-    
-    /**
-     * Đóng kết nối
-     */
+
     public void dongKetNoi() {
         taiKhoanDAL.close();
     }
