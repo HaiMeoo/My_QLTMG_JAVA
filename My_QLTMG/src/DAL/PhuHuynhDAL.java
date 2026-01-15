@@ -4,6 +4,7 @@ import DTO.PhuHuynhDTO;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import DTO.HocSinhDTO;
 
 public class PhuHuynhDAL {
 
@@ -20,10 +21,11 @@ public class PhuHuynhDAL {
         List<PhuHuynhDTO> list = new ArrayList<>();
 
         String query =
-                "SELECT P.IDPHUHUYNH, P.TENPHUHUYNH, P.SDT, P.EMAIL, P.DIACHI, " +
-                "H.IDHOCSINH, H.HOTENHOCSINH " +
-                "FROM PHUHUYNH P " +
-                "JOIN HOCSINH H ON P.IDHOCSINH = H.IDHOCSINH";
+        	    "SELECT P.IDPHUHUYNH, P.TENPHUHUYNH, P.SDT, P.EMAIL, P.DIACHI, " +
+        	    "H.IDHOCSINH, H.HOTEN AS HOTENHOCSINH " +
+        	    "FROM PHUHUYNH P " +
+        	    "JOIN HOCSINH H ON P.IDHOCSINH = H.IDHOCSINH";
+
 
         try {
             ResultSet rs = dataHelper.executeQuery(query);
@@ -49,15 +51,25 @@ public class PhuHuynhDAL {
     // ==============================
     // LẤY DANH SÁCH HỌC SINH (COMBOBOX)
     // ==============================
-    public ResultSet getDanhSachHocSinh() {
-        String query = "SELECT IDHOCSINH, HOTENHOCSINH FROM HOCSINH";
+    public List<HocSinhDTO> getDanhSachHocSinh() {
+        List<HocSinhDTO> list = new ArrayList<>();
+
+        String sql = "SELECT IDHOCSINH, HOTENHOCSINH FROM HOCSINH";
+
         try {
-            return dataHelper.executeQuery(query);
+            ResultSet rs = dataHelper.executeQuery(sql);
+            while (rs.next()) {
+                HocSinhDTO hs = new HocSinhDTO();
+                hs.setIDHOCSINH(rs.getString("IDHOCSINH"));
+                hs.setHOTENHOCSINH(rs.getString("HOTENHOCSINH"));
+                list.add(hs);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
+        return list;
     }
+
 
     // ==============================
     // THÊM PHỤ HUYNH
@@ -135,11 +147,12 @@ public class PhuHuynhDAL {
         List<PhuHuynhDTO> list = new ArrayList<>();
 
         String query =
-                "SELECT P.IDPHUHUYNH, P.TENPHUHUYNH, P.SDT, P.EMAIL, P.DIACHI, " +
-                "H.IDHOCSINH, H.HOTENHOCSINH " +
-                "FROM PHUHUYNH P " +
-                "LEFT JOIN HOCSINH H ON P.IDHOCSINH = H.IDHOCSINH " +
-                "WHERE P.IDPHUHUYNH LIKE ? OR P.TENPHUHUYNH LIKE ?";
+        	    "SELECT P.IDPHUHUYNH, P.TENPHUHUYNH, P.SDT, P.EMAIL, P.DIACHI, " +
+        	    "H.IDHOCSINH, H.HOTEN AS HOTENHOCSINH " +
+        	    "FROM PHUHUYNH P " +
+        	    "LEFT JOIN HOCSINH H ON P.IDHOCSINH = H.IDHOCSINH " +
+        	    "WHERE P.IDPHUHUYNH LIKE ? OR P.TENPHUHUYNH LIKE ?";
+
 
         try {
             ResultSet rs = dataHelper.executeQuery(

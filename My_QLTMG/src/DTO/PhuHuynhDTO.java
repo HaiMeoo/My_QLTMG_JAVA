@@ -90,4 +90,8 @@ public class PhuHuynhDTO {
     public void setIDHOCSINH(String IDHOCSINH) {
         this.IDHOCSINH = IDHOCSINH;
     }
+    @Override
+    public String toString() {
+        return HOTENHOCSINH; // để combobox hiển thị tên
+    }
 }

@@ -73,4 +73,9 @@ public class LopHocDTO {
     public void setHOTENGIAOVIEN(String HOTENGIAOVIEN) {
         this.HOTENGIAOVIEN = HOTENGIAOVIEN;
     }
+    @Override
+    public String toString() {
+        return TENLOP;
+    }
+
 }

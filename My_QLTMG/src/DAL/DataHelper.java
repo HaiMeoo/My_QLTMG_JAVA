@@ -9,9 +9,9 @@ public class DataHelper {
     private Connection connection;
     
     // Thông tin kết nối MySQL
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/my_qltmg";
-    private static final String USER_NAME = "root";
-    private static final String PASSWORD = "";
+    private static final String DB_URL ="jdbc:mysql://localhost:3306/qltmg?useUnicode=true&characterEncoding=UTF-8";
+    	private static final String USER_NAME = "root";
+    	private static final String PASSWORD = "";
     
     private DataHelper() {
         try {

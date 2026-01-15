@@ -86,8 +86,12 @@ public class HocSinhDTO {
 
     // ===== Getter hiển thị giới tính =====
     public String getGIOITINH_TEXT() {
-        if (GIOITINH == 1) return "Nam";
-        if (GIOITINH == 0) return "Nữ";
+        if (GIOITINH == 1) return "Nữ";
+        if (GIOITINH == 0) return "Nam";
         return "Khác";
+    }
+    @Override
+    public String toString() {
+        return HOTENHOCSINH;
     }
 }

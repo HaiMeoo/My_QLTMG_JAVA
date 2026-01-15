@@ -1,3 +1,4 @@
+
 package GUI;
 
 import javax.swing.*;
@@ -7,12 +8,20 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import BLL.TaiKhoanBLL;
 import DTO.TaiKhoanDTO;
 
 import BLL.GiaoVienBLL;
 import DTO.GiaoVienDTO;
+import BLL.LopHocBLL;
+import DTO.LopHocDTO;
+import BLL.HocSinhBLL;
+import DTO.HocSinhDTO;
+import BLL.PhuHuynhBLL;
+import DTO.PhuHuynhDTO;
 
 public class MainForm extends JFrame {
 	
@@ -22,7 +31,10 @@ public class MainForm extends JFrame {
 
 
 	private GiaoVienBLL giaoVienBLL = new GiaoVienBLL();
-	private DefaultTableModel modelGiaoVien;
+	private DefaultTableModel modelGV;
+	private JTable tableGV;
+	JComboBox<HocSinhDTO> cbChonphHS = new JComboBox<>();
+
 
 	
 	// KHÁC
@@ -33,6 +45,7 @@ public class MainForm extends JFrame {
     private JTextField txtCmtGV;
     private JTextField txtSdtGV;
     private JTextField txtTimGV;
+    private JComboBox<String> cbGioiTinhGV;
     private JPanel pLophoc;
     private JPanel pHocsinh;
     private JPanel pPhuhuynh;
@@ -167,20 +180,17 @@ public class MainForm extends JFrame {
         pGiaovien.setBackground(Color.WHITE);
         tabbedPane.addTab("Giáo viên", pGiaovien);
 
-        // ===== BLL =====
-        GiaoVienBLL giaoVienBLL = new GiaoVienBLL();
-
         // ================== TABLE MODEL ==================
         String[] colGV = {
-                "Mã giáo viên",
-                "Họ và tên",
-                "Giới tính",
-                "Ngày sinh",
-                "Địa chỉ",
-                "CCCD/CMND",
-                "Số điện thoại"
+            "Mã giáo viên",
+            "Họ và tên",
+            "Giới tính",
+            "Ngày sinh",
+            "Địa chỉ",
+            "CCCD/CMND",
+            "Số điện thoại"
         };
-        DefaultTableModel modelGV = new DefaultTableModel(colGV, 0);
+        modelGV = new DefaultTableModel(colGV, 0);
 
         // ================== PANEL THÔNG TIN ==================
         JPanel panelInfo = new JPanel(null);
@@ -189,37 +199,37 @@ public class MainForm extends JFrame {
         pGiaovien.add(panelInfo);
 
         panelInfo.add(new JLabel("Họ và tên:")).setBounds(20, 30, 80, 15);
-        JTextField txtHotenGV = new JTextField();
+        txtHotenGV = new JTextField();
         txtHotenGV.setBounds(92, 27, 236, 20);
         panelInfo.add(txtHotenGV);
 
         panelInfo.add(new JLabel("Mã GV:")).setBounds(20, 60, 80, 15);
-        JTextField txtMaGV = new JTextField();
+        txtMaGV = new JTextField();
         txtMaGV.setBounds(92, 56, 80, 20);
         panelInfo.add(txtMaGV);
 
         panelInfo.add(new JLabel("Ngày sinh:")).setBounds(20, 90, 80, 15);
-        JTextField txtNgaysinhGV = new JTextField();
+        txtNgaysinhGV = new JTextField();
         txtNgaysinhGV.setBounds(92, 87, 236, 20);
         panelInfo.add(txtNgaysinhGV);
 
         panelInfo.add(new JLabel("Giới tính:")).setBounds(182, 60, 56, 15);
-        JComboBox<String> cbGioiTinhGV = new JComboBox<>(new String[]{"Nam", "Nữ"});
+        cbGioiTinhGV = new JComboBox<>(new String[]{"Nam", "Nữ"});
         cbGioiTinhGV.setBounds(248, 57, 80, 20);
         panelInfo.add(cbGioiTinhGV);
 
         panelInfo.add(new JLabel("Địa chỉ:")).setBounds(360, 30, 60, 15);
-        JTextField txtDiachiGV = new JTextField();
+        txtDiachiGV = new JTextField();
         txtDiachiGV.setBounds(450, 27, 210, 20);
         panelInfo.add(txtDiachiGV);
 
         panelInfo.add(new JLabel("CCCD/CMND:")).setBounds(360, 60, 90, 15);
-        JTextField txtCmtGV = new JTextField();
+        txtCmtGV = new JTextField();
         txtCmtGV.setBounds(450, 57, 210, 20);
         panelInfo.add(txtCmtGV);
 
         panelInfo.add(new JLabel("SĐT:")).setBounds(360, 90, 90, 15);
-        JTextField txtSdtGV = new JTextField();
+        txtSdtGV = new JTextField();
         txtSdtGV.setBounds(450, 87, 210, 20);
         panelInfo.add(txtSdtGV);
 
@@ -228,7 +238,7 @@ public class MainForm extends JFrame {
         panelBtn.setBounds(45, 207, 707, 40);
         pGiaovien.add(panelBtn);
 
-        JTextField txtTimGV = new JTextField();
+        txtTimGV = new JTextField();
         txtTimGV.setBounds(10, 10, 120, 22);
         panelBtn.add(txtTimGV);
 
@@ -262,7 +272,7 @@ public class MainForm extends JFrame {
         panelTable.setBorder(BorderFactory.createTitledBorder("Danh sách giáo viên"));
         pGiaovien.add(panelTable);
 
-        JTable tableGV = new JTable(modelGV);
+        tableGV = new JTable(modelGV);
         tableGV.setRowHeight(22);
         tableGV.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
@@ -270,28 +280,10 @@ public class MainForm extends JFrame {
         scrollGV.setBounds(10, 21, 677, 288);
         panelTable.add(scrollGV);
 
-        // ================== HÀM LOAD TABLE (QUAN TRỌNG NHẤT) ==================
-        Runnable loadTableGV = () -> {
-            modelGV.setRowCount(0);
-            for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
-                modelGV.addRow(new Object[]{
-                        gv.getIdGiaoVien(),
-                        gv.getHoTen(),
-                        gv.getGioiTinh() == 1 ? "Nam" : "Nữ",
-                        gv.getNgaySinh(),
-                        gv.getDiaChi(),
-                        gv.getCccd(),
-                        gv.getSdt()
-                });
-            }
-        };
-
         // LOAD LẦN ĐẦU
-        loadTableGV.run();
+        loadTableGV();
 
         // ================== SỰ KIỆN ==================
-
-        // CLICK TABLE
         tableGV.getSelectionModel().addListSelectionListener(e -> {
             int row = tableGV.getSelectedRow();
             if (row >= 0) {
@@ -305,76 +297,59 @@ public class MainForm extends JFrame {
             }
         });
 
-        // THÊM
         btnThemGV.addActionListener(e -> {
-            try {
-                GiaoVienDTO gv = new GiaoVienDTO();
-                gv.setIdGiaoVien(txtMaGV.getText());
-                gv.setHoTen(txtHotenGV.getText());
-                gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
-                gv.setNgaySinh(txtNgaysinhGV.getText());
-                gv.setDiaChi(txtDiachiGV.getText());
-                gv.setCccd(txtCmtGV.getText());
-                gv.setSdt(txtSdtGV.getText());
+            GiaoVienDTO gv = new GiaoVienDTO();
+            gv.setIdGiaoVien(txtMaGV.getText());
+            gv.setHoTen(txtHotenGV.getText());
+            gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
+            gv.setNgaySinh(chuyenNgay(txtNgaysinhGV.getText()));
+            gv.setDiaChi(txtDiachiGV.getText());
+            gv.setCccd(txtCmtGV.getText());
+            gv.setSdt(txtSdtGV.getText());
 
-                giaoVienBLL.them(gv);
-                loadTableGV.run();
-
-                JOptionPane.showMessageDialog(null, "Thêm giáo viên thành công");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage());
-            }
+            giaoVienBLL.them(gv);
+            loadTableGV();
         });
 
-        // SỬA
         btnSuaGV.addActionListener(e -> {
-            try {
-                GiaoVienDTO gv = new GiaoVienDTO();
-                gv.setIdGiaoVien(txtMaGV.getText());
-                gv.setHoTen(txtHotenGV.getText());
-                gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
-                gv.setNgaySinh(txtNgaysinhGV.getText());
-                gv.setDiaChi(txtDiachiGV.getText());
-                gv.setCccd(txtCmtGV.getText());
-                gv.setSdt(txtSdtGV.getText());
+            GiaoVienDTO gv = new GiaoVienDTO();
+            gv.setIdGiaoVien(txtMaGV.getText());
+            gv.setHoTen(txtHotenGV.getText());
+            gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
+            gv.setNgaySinh(chuyenNgay(txtNgaysinhGV.getText()));
+            gv.setDiaChi(txtDiachiGV.getText());
+            gv.setCccd(txtCmtGV.getText());
+            gv.setSdt(txtSdtGV.getText());
 
-                giaoVienBLL.sua(gv);
-                loadTableGV.run();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage());
-            }
+            giaoVienBLL.sua(gv);
+            loadTableGV();
         });
 
-        // XÓA
         btnXoaGV.addActionListener(e -> {
             int row = tableGV.getSelectedRow();
-            if (row == -1) return;
-
-            String maGV = modelGV.getValueAt(row, 0).toString();
-            giaoVienBLL.xoa(maGV);
-            loadTableGV.run();
+            if (row != -1) {
+                giaoVienBLL.xoa(modelGV.getValueAt(row, 0).toString());
+                loadTableGV();
+            }
         });
 
-        // TÌM
         btnTimGV.addActionListener(e -> {
             modelGV.setRowCount(0);
             for (GiaoVienDTO gv : giaoVienBLL.tim(txtTimGV.getText())) {
                 modelGV.addRow(new Object[]{
-                        gv.getIdGiaoVien(),
-                        gv.getHoTen(),
-                        gv.getGioiTinh() == 1 ? "Nam" : "Nữ",
-                        gv.getNgaySinh(),
-                        gv.getDiaChi(),
-                        gv.getCccd(),
-                        gv.getSdt()
+                    gv.getIdGiaoVien(),
+                    gv.getHoTen(),
+                    gv.getGioiTinh() == 1 ? "Nam" : "Nữ",
+                    gv.getNgaySinh(),
+                    gv.getDiaChi(),
+                    gv.getCccd(),
+                    gv.getSdt()
                 });
             }
         });
 
-        // HIỂN THỊ TẤT CẢ
-        btnHienTatCaGV.addActionListener(e -> loadTableGV.run());
+        btnHienTatCaGV.addActionListener(e -> loadTableGV());
 
-        // LÀM MỚI
         btnLamMoiGV.addActionListener(e -> {
             txtMaGV.setText("");
             txtHotenGV.setText("");
@@ -392,366 +367,667 @@ public class MainForm extends JFrame {
 
 
 
-        // ================= TAB LỚP HỌC =================
+     // ================= TAB LỚP HỌC =================
         pLophoc = new JPanel();
         pLophoc.setBackground(new Color(255, 255, 255));
         tabbedPane.addTab("Lớp học", pLophoc);
         pLophoc.setLayout(null);
-        
+
+        // ===== BLL =====
+        LopHocBLL lopHocBLL = new LopHocBLL();
+        GiaoVienBLL giaoVienBLL_Lop = new GiaoVienBLL();
+
+        // ================== PANEL THÔNG TIN ==================
         JPanel panel_3 = new JPanel();
         panel_3.setLayout(null);
-        panel_3.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Thông tin lớp học"));
+        panel_3.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY), "Thông tin lớp học"));
         panel_3.setBounds(28, 27, 738, 140);
         pLophoc.add(panel_3);
-        
-        JLabel lblHoten_2 = new JLabel("Mã lớp:");
-        lblHoten_2.setBounds(20, 30, 80, 15);
-        panel_3.add(lblHoten_2);
-        
+
+        JLabel lblMaLop = new JLabel("Mã lớp:");
+        lblMaLop.setBounds(20, 30, 80, 15);
+        panel_3.add(lblMaLop);
+
         txtMalop = new JTextField();
         txtMalop.setBounds(110, 27, 217, 20);
         panel_3.add(txtMalop);
-        
-        JLabel lblMaGV_2 = new JLabel("Tên lớp");
-        lblMaGV_2.setBounds(20, 60, 80, 15);
-        panel_3.add(lblMaGV_2);
-        
+
+        JLabel lblTenLop = new JLabel("Tên lớp:");
+        lblTenLop.setBounds(20, 60, 80, 15);
+        panel_3.add(lblTenLop);
+
         txtTenlop = new JTextField();
         txtTenlop.setBounds(110, 57, 217, 20);
         panel_3.add(txtTenlop);
-        
-        JLabel txtSiso = new JLabel("Sỉ số:");
-        txtSiso.setBounds(20, 90, 80, 15);
-        panel_3.add(txtSiso);
-        
+
+        JLabel lblSiSo = new JLabel("Sỉ số:");
+        lblSiSo.setBounds(20, 90, 80, 15);
+        panel_3.add(lblSiSo);
+
         textField_16 = new JTextField();
         textField_16.setBounds(110, 87, 217, 20);
         panel_3.add(textField_16);
-        
-        JLabel lblGioitinh_2 = new JLabel("Giáo viên chủ nhiệm:");
-        lblGioitinh_2.setBounds(356, 34, 99, 15);
-        panel_3.add(lblGioitinh_2);
-        
-        JComboBox cbChonGVchunhiemlop = new JComboBox();
-        cbChonGVchunhiemlop.setBounds(464, 30, 154, 22);
+
+        JLabel lblGVCN = new JLabel("Giáo viên chủ nhiệm:");
+        lblGVCN.setBounds(356, 34, 150, 15);
+        panel_3.add(lblGVCN);
+
+        JComboBox<GiaoVienDTO> cbChonGVchunhiemlop = new JComboBox<>();
+        cbChonGVchunhiemlop.setBounds(510, 30, 200, 22);
         panel_3.add(cbChonGVchunhiemlop);
-        
+
+        // ================== PANEL CHỨC NĂNG ==================
         JPanel panel_1_1 = new JPanel();
         panel_1_1.setLayout(null);
         panel_1_1.setBounds(28, 178, 738, 40);
         pLophoc.add(panel_1_1);
-        
+
         txtTimLop = new JTextField();
         txtTimLop.setBounds(10, 10, 120, 22);
         panel_1_1.add(txtTimLop);
-        
+
         JButton btnTimlop = new JButton("Tìm kiếm");
-        btnTimlop.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnTimlop.setBounds(140, 10, 90, 22);
         panel_1_1.add(btnTimlop);
-        
+
         JButton btnHienthitatcalop = new JButton("Hiển thị tất cả");
-        btnHienthitatcalop.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnHienthitatcalop.setBounds(240, 10, 120, 22);
         panel_1_1.add(btnHienthitatcalop);
-        
+
         JButton btnThemlop = new JButton("Thêm");
-        btnThemlop.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnThemlop.setBounds(370, 10, 70, 22);
         panel_1_1.add(btnThemlop);
-        
+
         JButton btnSualop = new JButton("Sửa");
-        btnSualop.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnSualop.setBounds(450, 10, 70, 22);
         panel_1_1.add(btnSualop);
-        
+
         JButton btnXoalop = new JButton("Xóa");
-        btnXoalop.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnXoalop.setBounds(530, 10, 70, 22);
         panel_1_1.add(btnXoalop);
-        
+
         JButton btnLammoilop = new JButton("Làm mới");
-        btnLammoilop.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnLammoilop.setBounds(610, 10, 99, 22);
         panel_1_1.add(btnLammoilop);
-        
+
+        // ================== PANEL TABLE ==================
         JPanel panel_5_1 = new JPanel();
         panel_5_1.setLayout(null);
-        panel_5_1.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách lớp học"));
+        panel_5_1.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY), "Danh sách lớp học"));
         panel_5_1.setBounds(28, 229, 738, 320);
         pLophoc.add(panel_5_1);
+
+        String[] colLop = {"Mã lớp", "Tên lớp", "Sỉ số", "Giáo viên chủ nhiệm"};
+        DefaultTableModel modelLop = new DefaultTableModel(colLop, 0);
+        JTable tableLop = new JTable(modelLop);
+        tableLop.setRowHeight(22);
+        tableLop.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollLop = new JScrollPane(tableLop);
+        scrollLop.setBounds(10, 21, 718, 289);
+        panel_5_1.add(scrollLop);
+
+        // ================== LOAD COMBO GV ==================
+        Runnable loadComboGV = () -> {
+            cbChonGVchunhiemlop.removeAllItems();
+            for (GiaoVienDTO gv : giaoVienBLL_Lop.getAll()) {
+                cbChonGVchunhiemlop.addItem(gv);
+            }
+        };
+
+        // ================== LOAD TABLE ==================
+        Runnable loadTableLop = () -> {
+            modelLop.setRowCount(0);
+            for (LopHocDTO lop : lopHocBLL.getLopHocList()) {
+                modelLop.addRow(new Object[]{
+                        lop.getIDLOP(),
+                        lop.getTENLOP(),
+                        lop.getSISO(),
+                        lop.getHOTENGIAOVIEN()
+                });
+            }
+        };
+
+        // LOAD BAN ĐẦU
+        loadComboGV.run();
+        loadTableLop.run();
+
+        // ================== SỰ KIỆN ==================
+
+        // CLICK TABLE
+        tableLop.getSelectionModel().addListSelectionListener(e -> {
+            int row = tableLop.getSelectedRow();
+            if (row >= 0) {
+                txtMalop.setText(modelLop.getValueAt(row, 0).toString());
+                txtTenlop.setText(modelLop.getValueAt(row, 1).toString());
+                textField_16.setText(modelLop.getValueAt(row, 2).toString());
+            }
+        });
+
+        // THÊM
+        btnThemlop.addActionListener(e -> {
+            GiaoVienDTO gv = (GiaoVienDTO) cbChonGVchunhiemlop.getSelectedItem();
+
+            lopHocBLL.themLopHoc(
+                    txtMalop.getText(),
+                    txtTenlop.getText(),
+                    Integer.parseInt(textField_16.getText()),
+                    gv.getIdGiaoVien()
+            );
+            loadTableLop.run();
+        });
+
+        // SỬA
+        btnSualop.addActionListener(e -> {
+            GiaoVienDTO gv = (GiaoVienDTO) cbChonGVchunhiemlop.getSelectedItem();
+
+            lopHocBLL.suaLopHoc(
+                    txtMalop.getText(),
+                    txtTenlop.getText(),
+                    Integer.parseInt(textField_16.getText()),
+                    gv.getIdGiaoVien()
+            );
+            loadTableLop.run();
+        });
+
+        // XÓA
+        btnXoalop.addActionListener(e -> {
+            int row = tableLop.getSelectedRow();
+            if (row == -1) return;
+
+            String maLop = modelLop.getValueAt(row, 0).toString();
+            lopHocBLL.xoaLopHoc(maLop);
+            loadTableLop.run();
+        });
+
+        // TÌM
+        btnTimlop.addActionListener(e -> {
+            modelLop.setRowCount(0);
+            for (LopHocDTO lop : lopHocBLL.timKiemLopHoc(txtTimLop.getText())) {
+                modelLop.addRow(new Object[]{
+                        lop.getIDLOP(),
+                        lop.getTENLOP(),
+                        lop.getSISO(),
+                        lop.getHOTENGIAOVIEN()
+                });
+            }
+        });
+
+        // HIỂN THỊ TẤT CẢ
+        btnHienthitatcalop.addActionListener(e -> loadTableLop.run());
+
+        // LÀM MỚI
+        btnLammoilop.addActionListener(e -> {
+            txtMalop.setText("");
+            txtTenlop.setText("");
+            textField_16.setText("");
+            txtTimLop.setText("");
+            tableLop.clearSelection();
+        });
+
+
         
-        // ================= TAB HỌC SINH =================
-        table = new JTable();
-        table.setBounds(10, 21, 718, 288);
-        panel_5_1.add(table);
-        pHocsinh = new JPanel();
-        pHocsinh.setBackground(new Color(255, 255, 255));
+     // ================= TAB HỌC SINH =================
+        JPanel pHocsinh = new JPanel();
+        pHocsinh.setBackground(Color.WHITE);
         tabbedPane.addTab("Học sinh", pHocsinh);
         pHocsinh.setLayout(null);
-        
-        JPanel panel_2 = new JPanel();
-        panel_2.setLayout(null);
-        panel_2.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY),"Thông tin học sinh"));
-        panel_2.setBounds(22, 43, 734, 140);
-        pHocsinh.add(panel_2);
-        
-        JLabel lblHoten_1 = new JLabel("Họ và tên:");
-        lblHoten_1.setBounds(20, 30, 80, 15);
-        panel_2.add(lblHoten_1);
-        
-        textField = new JTextField();
-        textField.setBounds(110, 27, 217, 20);
-        panel_2.add(textField);
-        
-        JLabel lblMaGV_1 = new JLabel("Mã học sinh:");
-        lblMaGV_1.setBounds(20, 60, 80, 15);
-        panel_2.add(lblMaGV_1);
-        
-        textField_1 = new JTextField();
-        textField_1.setBounds(110, 57, 80, 20);
-        panel_2.add(textField_1);
-        
-        JLabel lblNgaySinh_1 = new JLabel("Ngày sinh:");
-        lblNgaySinh_1.setBounds(20, 90, 80, 15);
-        panel_2.add(lblNgaySinh_1);
-        
-        textField_2 = new JTextField();
-        textField_2.setBounds(110, 87, 217, 20);
-        panel_2.add(textField_2);
-        
-        JLabel lblGioitinh_1 = new JLabel("Giới tính:");
-        lblGioitinh_1.setBounds(200, 60, 51, 15);
-        panel_2.add(lblGioitinh_1);
-        
-        JLabel lblDiachi_1 = new JLabel("Tên lớp:");
-        lblDiachi_1.setBounds(390, 30, 60, 15);
-        panel_2.add(lblDiachi_1);
-        
-        JLabel lblCCCD_1 = new JLabel("Địa chỉ:");
-        lblCCCD_1.setBounds(389, 60, 61, 15);
-        panel_2.add(lblCCCD_1);
-        
-        textField_4 = new JTextField();
-        textField_4.setBounds(450, 57, 210, 48);
-        panel_2.add(textField_4);
-        
-        JComboBox comboBox_1 = new JComboBox();
-        comboBox_1.setBounds(253, 56, 74, 22);
-        panel_2.add(comboBox_1);
-        
-        JComboBox comboBox_2 = new JComboBox();
-        comboBox_2.setBounds(450, 26, 124, 22);
-        panel_2.add(comboBox_2);
-        
-        JPanel panel_1_2 = new JPanel();
-        panel_1_2.setLayout(null);
-        panel_1_2.setBounds(22, 194, 734, 40);
-        pHocsinh.add(panel_1_2);
-        
-        txtTimHS = new JTextField();
+
+        // ===== BLL =====
+        HocSinhBLL hocSinhBLL = new HocSinhBLL();
+        LopHocBLL lopHocBLL_HS = new LopHocBLL();
+
+        // ================== PANEL THÔNG TIN ==================
+        JPanel panelHS = new JPanel(null);
+        panelHS.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY), "Thông tin học sinh"));
+        panelHS.setBounds(28, 27, 738, 140);
+        pHocsinh.add(panelHS);
+
+        panelHS.add(new JLabel("Mã HS:")).setBounds(20, 30, 80, 15);
+        JTextField txtMaHS = new JTextField();
+        txtMaHS.setBounds(110, 27, 150, 20);
+        panelHS.add(txtMaHS);
+
+        panelHS.add(new JLabel("Họ tên:")).setBounds(20, 60, 80, 15);
+        JTextField txtTenHS = new JTextField();
+        txtTenHS.setBounds(110, 57, 217, 20);
+        panelHS.add(txtTenHS);
+
+        panelHS.add(new JLabel("Ngày sinh:")).setBounds(20, 90, 80, 15);
+        JTextField txtNgaySinhHS = new JTextField("06/04/04");
+        txtNgaySinhHS.setBounds(110, 87, 150, 20);
+        panelHS.add(txtNgaySinhHS);
+
+        panelHS.add(new JLabel("Giới tính:")).setBounds(300, 30, 80, 15);
+        JComboBox<String> cbGioiTinhHS = new JComboBox<>(new String[]{"Nam", "Nữ"});
+        cbGioiTinhHS.setBounds(380, 27, 80, 22);
+        panelHS.add(cbGioiTinhHS);
+
+        panelHS.add(new JLabel("Lớp:")).setBounds(300, 60, 80, 15);
+        JComboBox<LopHocDTO> cbLopHS = new JComboBox<>();
+        cbLopHS.setBounds(380, 57, 200, 22);
+        panelHS.add(cbLopHS);
+
+        panelHS.add(new JLabel("Địa chỉ:")).setBounds(300, 90, 80, 15);
+        JTextField txtDiaChiHS = new JTextField();
+        txtDiaChiHS.setBounds(380, 87, 300, 20);
+        panelHS.add(txtDiaChiHS);
+
+        // ================== PANEL CHỨC NĂNG ==================
+        JPanel panelBtnHS = new JPanel(null);
+        panelBtnHS.setBounds(28, 178, 738, 40);
+        pHocsinh.add(panelBtnHS);
+
+        JTextField txtTimHS = new JTextField();
         txtTimHS.setBounds(10, 10, 120, 22);
-        panel_1_2.add(txtTimHS);
-        
+        panelBtnHS.add(txtTimHS);
+
         JButton btnTimHS = new JButton("Tìm kiếm");
-        btnTimHS.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnTimHS.setBounds(140, 10, 90, 22);
-        panel_1_2.add(btnTimHS);
-        
-        JButton btnHienthitatcaHS = new JButton("Hiển thị tất cả");
-        btnHienthitatcaHS.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnHienthitatcaHS.setBounds(240, 10, 120, 22);
-        panel_1_2.add(btnHienthitatcaHS);
-        
+        panelBtnHS.add(btnTimHS);
+
+        JButton btnHienTatCaHS = new JButton("Hiển thị tất cả");
+        btnHienTatCaHS.setBounds(240, 10, 120, 22);
+        panelBtnHS.add(btnHienTatCaHS);
+
         JButton btnThemHS = new JButton("Thêm");
-        btnThemHS.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnThemHS.setBounds(370, 10, 70, 22);
-        panel_1_2.add(btnThemHS);
-        
+        panelBtnHS.add(btnThemHS);
+
         JButton btnSuaHS = new JButton("Sửa");
-        btnSuaHS.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnSuaHS.setBounds(450, 10, 70, 22);
-        panel_1_2.add(btnSuaHS);
-        
+        panelBtnHS.add(btnSuaHS);
+
         JButton btnXoaHS = new JButton("Xóa");
-        btnXoaHS.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnXoaHS.setBounds(530, 10, 70, 22);
-        panel_1_2.add(btnXoaHS);
-        
-        JButton btnLammoiHS = new JButton("Làm mới");
-        btnLammoiHS.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
+        panelBtnHS.add(btnXoaHS);
+
+        JButton btnLamMoiHS = new JButton("Làm mới");
+        btnLamMoiHS.setBounds(610, 10, 99, 22);
+        panelBtnHS.add(btnLamMoiHS);
+
+        // ================== PANEL TABLE ==================
+        JPanel panelTableHS = new JPanel(null);
+        panelTableHS.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY), "Danh sách học sinh"));
+        panelTableHS.setBounds(28, 229, 738, 320);
+        pHocsinh.add(panelTableHS);
+
+        String[] colHS = {"Mã HS", "Họ tên", "Giới tính", "Ngày sinh", "Địa chỉ", "Lớp"};
+        DefaultTableModel modelHS = new DefaultTableModel(colHS, 0);
+        JTable tableHS = new JTable(modelHS);
+        tableHS.setRowHeight(22);
+        tableHS.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollHS = new JScrollPane(tableHS);
+        scrollHS.setBounds(10, 21, 718, 289);
+        panelTableHS.add(scrollHS);
+
+        // ================== LOAD COMBO LỚP ==================
+        Runnable loadComboLopHS = () -> {
+            cbLopHS.removeAllItems();
+            for (LopHocDTO lop : lopHocBLL_HS.getLopHocList()) {
+                cbLopHS.addItem(lop);
+            }
+        };
+
+        // ================== LOAD TABLE ==================
+        Runnable loadTableHS = () -> {
+            modelHS.setRowCount(0);
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy");
+
+            for (HocSinhDTO hs : hocSinhBLL.getHocSinhList()) {
+                modelHS.addRow(new Object[]{
+                        hs.getIDHOCSINH(),
+                        hs.getHOTENHOCSINH(),
+                        hs.getGIOITINH() == 1 ? "Nam" : "Nữ",
+                        sdf.format(hs.getNGAYSINH()),
+                        hs.getDIACHI(),
+                        hs.getTENLOP()
+                });
+            }
+        };
+
+        // LOAD BAN ĐẦU
+        loadComboLopHS.run();
+        loadTableHS.run();
+
+        // ================== SỰ KIỆN ==================
+        tableHS.getSelectionModel().addListSelectionListener(e -> {
+            int row = tableHS.getSelectedRow();
+            if (row >= 0) {
+                txtMaHS.setText(modelHS.getValueAt(row, 0).toString());
+                txtTenHS.setText(modelHS.getValueAt(row, 1).toString());
+                cbGioiTinhHS.setSelectedItem(modelHS.getValueAt(row, 2).toString());
+                txtNgaySinhHS.setText(modelHS.getValueAt(row, 3).toString());
+                txtDiaChiHS.setText(modelHS.getValueAt(row, 4).toString());
+            }
         });
-        btnLammoiHS.setBounds(610, 10, 99, 22);
-        panel_1_2.add(btnLammoiHS);
+
+        // ================== THÊM ==================
+        btnThemHS.addActionListener(e -> {
+            try {
+                HocSinhDTO hs = new HocSinhDTO();
+                hs.setIDHOCSINH(txtMaHS.getText());
+                hs.setHOTENHOCSINH(txtTenHS.getText());
+                hs.setDIACHI(txtDiaChiHS.getText());
+                hs.setGIOITINH(cbGioiTinhHS.getSelectedIndex());
+
+                LopHocDTO lop = (LopHocDTO) cbLopHS.getSelectedItem();
+                hs.setIDLOP(lop.getIDLOP());
+
+                Date ns = new SimpleDateFormat("dd/MM/yy").parse(txtNgaySinhHS.getText());
+                hs.setNGAYSINH(ns);
+
+                hocSinhBLL.themHocSinh(hs);
+                loadTableHS.run();
+                JOptionPane.showMessageDialog(null, "Thêm học sinh thành công!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        });
+
+        // ================== SỬA ==================
+        btnSuaHS.addActionListener(e -> {
+            try {
+                HocSinhDTO hs = new HocSinhDTO();
+                hs.setIDHOCSINH(txtMaHS.getText());
+                hs.setHOTENHOCSINH(txtTenHS.getText());
+                hs.setDIACHI(txtDiaChiHS.getText());
+                hs.setGIOITINH(cbGioiTinhHS.getSelectedIndex());
+
+                LopHocDTO lop = (LopHocDTO) cbLopHS.getSelectedItem();
+                hs.setIDLOP(lop.getIDLOP());
+
+                Date ns = new SimpleDateFormat("dd/MM/yy").parse(txtNgaySinhHS.getText());
+                hs.setNGAYSINH(ns);
+
+                hocSinhBLL.suaHocSinh(hs);
+                loadTableHS.run();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        });
+
+        // ================== XOÁ ==================
+        btnXoaHS.addActionListener(e -> {
+            int row = tableHS.getSelectedRow();
+            if (row == -1) return;
+
+            try {
+                hocSinhBLL.xoaHocSinh(modelHS.getValueAt(row, 0).toString());
+                loadTableHS.run();
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        });
+
+        // ================== TÌM ==================
+        btnTimHS.addActionListener(e -> {
+            try {
+                modelHS.setRowCount(0);
+                for (HocSinhDTO hs : hocSinhBLL.timHocSinhTheoTen(txtTimHS.getText())) {
+                    modelHS.addRow(new Object[]{
+                            hs.getIDHOCSINH(),
+                            hs.getHOTENHOCSINH(),
+                            hs.getGIOITINH() == 1 ? "Nam" : "Nữ",
+                            new SimpleDateFormat("dd/MM/yy").format(hs.getNGAYSINH()),
+                            hs.getDIACHI(),
+                            hs.getTENLOP()
+                    });
+                }
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
+        });
+
+        // ================== HIỂN THỊ TẤT CẢ ==================
+        btnHienTatCaHS.addActionListener(e -> loadTableHS.run());
+
+        // ================== LÀM MỚI ==================
+        btnLamMoiHS.addActionListener(e -> {
+            txtMaHS.setText("");
+            txtTenHS.setText("");
+            txtNgaySinhHS.setText("");
+            txtDiaChiHS.setText("");
+            txtTimHS.setText("");
+            tableHS.clearSelection();
+        });
         
-        JPanel panel_5_2 = new JPanel();
-        panel_5_2.setLayout(null);
-        panel_5_2.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách học sinh"));
-        panel_5_2.setBounds(35, 245, 707, 339);
-        pHocsinh.add(panel_5_2);
         
-        // ================= TAB PHỤ HUYNH =================
-        
-        table_1 = new JTable();
-        table_1.setBounds(10, 21, 677, 288);
-        panel_5_2.add(table_1);
-        pPhuhuynh = new JPanel();
-        pPhuhuynh.setBackground(new Color(255, 255, 255));
+     // ================= TAB PHỤ HUYNH =================
+        JPanel pPhuhuynh = new JPanel();
+        pPhuhuynh.setBackground(Color.WHITE);
         tabbedPane.addTab("Phụ huynh", pPhuhuynh);
         pPhuhuynh.setLayout(null);
-        
-        JPanel panel_2_1 = new JPanel();
-        panel_2_1.setLayout(null);
-        panel_2_1.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.GRAY),"Thông tin Phụ huynh"));
-        panel_2_1.setBounds(23, 23, 723, 172);
-        pPhuhuynh.add(panel_2_1);
-        
-        JLabel lblHoten_1_1 = new JLabel("Mã phụ huynh:");
-        lblHoten_1_1.setBounds(20, 30, 80, 15);
-        panel_2_1.add(lblHoten_1_1);
-        
-        txtMaPH = new JTextField();
-        txtMaPH.setBounds(110, 27, 217, 20);
-        panel_2_1.add(txtMaPH);
-        
-        JLabel lblMaGV_1_1 = new JLabel("Họ và tên:");
-        lblMaGV_1_1.setBounds(20, 60, 80, 15);
-        panel_2_1.add(lblMaGV_1_1);
-        
-        txtHovatenPH = new JTextField();
-        txtHovatenPH.setBounds(110, 57, 217, 20);
-        panel_2_1.add(txtHovatenPH);
-        
-        JLabel lblNgaySinh_1_1 = new JLabel("Số điện thoại:");
-        lblNgaySinh_1_1.setBounds(20, 90, 80, 15);
-        panel_2_1.add(lblNgaySinh_1_1);
-        
-        txtSodtPH = new JTextField();
-        txtSodtPH.setBounds(110, 87, 217, 20);
-        panel_2_1.add(txtSodtPH);
-        
-        JLabel lblDiachi_1_1 = new JLabel("Tên học sinh:");
-        lblDiachi_1_1.setBounds(375, 30, 75, 15);
-        panel_2_1.add(lblDiachi_1_1);
-        
-        JLabel lblCCCD_1_1 = new JLabel("Địa chỉ:");
-        lblCCCD_1_1.setBounds(375, 60, 61, 15);
-        panel_2_1.add(lblCCCD_1_1);
-        
-        txtDiachiPH = new JTextField();
-        txtDiachiPH.setBounds(450, 57, 210, 48);
-        panel_2_1.add(txtDiachiPH);
-        
-        JComboBox cbChonphHS = new JComboBox();
-        cbChonphHS.setBounds(450, 26, 124, 22);
-        panel_2_1.add(cbChonphHS);
-        
-        JLabel lblNgaySinh_1_1_1 = new JLabel("Email:");
-        lblNgaySinh_1_1_1.setBounds(20, 119, 80, 15);
-        panel_2_1.add(lblNgaySinh_1_1_1);
-        
-        txtEmailPH = new JTextField();
-        txtEmailPH.setBounds(110, 116, 217, 20);
-        panel_2_1.add(txtEmailPH);
-        
-        JPanel panel_1_2_1 = new JPanel();
-        panel_1_2_1.setLayout(null);
-        panel_1_2_1.setBounds(23, 206, 723, 40);
-        pPhuhuynh.add(panel_1_2_1);
-        
-        txtTimPH = new JTextField();
+
+        // ===== BLL =====
+        PhuHuynhBLL phuHuynhBLL = new PhuHuynhBLL();
+
+        // ================== PANEL THÔNG TIN ==================
+        JPanel panelPH_Info = new JPanel(null);
+        panelPH_Info.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY), "Thông tin phụ huynh"));
+        panelPH_Info.setBounds(23, 23, 723, 170);
+        pPhuhuynh.add(panelPH_Info);
+
+        // --- Mã PH ---
+        panelPH_Info.add(new JLabel("Mã phụ huynh:")).setBounds(20, 30, 100, 15);
+        JTextField txtMaPH = new JTextField();
+        txtMaPH.setBounds(130, 27, 180, 20);
+        panelPH_Info.add(txtMaPH);
+
+        // --- Họ tên ---
+        panelPH_Info.add(new JLabel("Họ và tên:")).setBounds(20, 60, 100, 15);
+        JTextField txtHovatenPH = new JTextField();
+        txtHovatenPH.setBounds(130, 57, 180, 20);
+        panelPH_Info.add(txtHovatenPH);
+
+        // --- SĐT ---
+        panelPH_Info.add(new JLabel("Số điện thoại:")).setBounds(20, 90, 100, 15);
+        JTextField txtSodtPH = new JTextField();
+        txtSodtPH.setBounds(130, 87, 180, 20);
+        panelPH_Info.add(txtSodtPH);
+
+        // --- Email ---
+        panelPH_Info.add(new JLabel("Email:")).setBounds(20, 120, 100, 15);
+        JTextField txtEmailPH = new JTextField();
+        txtEmailPH.setBounds(130, 117, 180, 20);
+        panelPH_Info.add(txtEmailPH);
+
+        // --- Học sinh ---
+        panelPH_Info.add(new JLabel("Tên học sinh:")).setBounds(360, 30, 100, 15);
+        JComboBox<HocSinhDTO> cbChonphHS = new JComboBox<>();
+        cbChonphHS.setBounds(470, 27, 200, 22);
+        panelPH_Info.add(cbChonphHS);
+
+        // --- Địa chỉ ---
+        panelPH_Info.add(new JLabel("Địa chỉ:")).setBounds(360, 60, 100, 15);
+        JTextField txtDiachiPH = new JTextField();
+        txtDiachiPH.setBounds(470, 57, 200, 80);
+        panelPH_Info.add(txtDiachiPH);
+
+        // ================== PANEL CHỨC NĂNG ==================
+        JPanel panelPH_Btn = new JPanel(null);
+        panelPH_Btn.setBounds(23, 206, 723, 40);
+        pPhuhuynh.add(panelPH_Btn);
+
+        JTextField txtTimPH = new JTextField();
         txtTimPH.setBounds(10, 10, 120, 22);
-        panel_1_2_1.add(txtTimPH);
-        
+        panelPH_Btn.add(txtTimPH);
+
         JButton btnTimPH = new JButton("Tìm kiếm");
-        btnTimPH.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnTimPH.setBounds(140, 10, 90, 22);
-        panel_1_2_1.add(btnTimPH);
-        
+        panelPH_Btn.add(btnTimPH);
+
         JButton btnHienthitatcaPH = new JButton("Hiển thị tất cả");
-        btnHienthitatcaPH.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnHienthitatcaPH.setBounds(240, 10, 120, 22);
-        panel_1_2_1.add(btnHienthitatcaPH);
-        
+        panelPH_Btn.add(btnHienthitatcaPH);
+
         JButton btnThemPH = new JButton("Thêm");
-        btnThemPH.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnThemPH.setBounds(370, 10, 70, 22);
-        panel_1_2_1.add(btnThemPH);
-        
+        panelPH_Btn.add(btnThemPH);
+
         JButton btnSuaPH = new JButton("Sửa");
-        btnSuaPH.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnSuaPH.setBounds(450, 10, 70, 22);
-        panel_1_2_1.add(btnSuaPH);
-        
+        panelPH_Btn.add(btnSuaPH);
+
         JButton btnXoaPH = new JButton("Xóa");
-        btnXoaPH.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnXoaPH.setBounds(530, 10, 70, 22);
-        panel_1_2_1.add(btnXoaPH);
-        
+        panelPH_Btn.add(btnXoaPH);
+
         JButton btnLammoiPH = new JButton("Làm mới");
-        btnLammoiPH.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
         btnLammoiPH.setBounds(610, 10, 103, 22);
-        panel_1_2_1.add(btnLammoiPH);
+        panelPH_Btn.add(btnLammoiPH);
+
+        // ================== PANEL TABLE ==================
+        JPanel panelPH_Table = new JPanel(null);
+        panelPH_Table.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY), "Danh sách phụ huynh"));
+        panelPH_Table.setBounds(23, 257, 723, 320);
+        pPhuhuynh.add(panelPH_Table);
+
+        String[] colPH = {"Mã PH", "Họ tên", "SĐT", "Email", "Địa chỉ", "Học sinh"};
+        DefaultTableModel modelPH = new DefaultTableModel(colPH, 0);
+        JTable tablePH = new JTable(modelPH);
+        tablePH.setRowHeight(22);
+        tablePH.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        JScrollPane scrollPH = new JScrollPane(tablePH);
+        scrollPH.setBounds(10, 22, 703, 288);
+        panelPH_Table.add(scrollPH);
+
+        // ================== LOAD COMBO HỌC SINH ==================
+        Runnable loadComboHocSinhPH = () -> {
+            cbChonphHS.removeAllItems();
+            for (HocSinhDTO hs : phuHuynhBLL.getDanhSachHocSinh()) {
+                cbChonphHS.addItem(hs);
+            }
+        };
+
+        // ================== LOAD TABLE ==================
+        Runnable loadTablePH = () -> {
+            modelPH.setRowCount(0);
+            for (PhuHuynhDTO ph : phuHuynhBLL.getPhuHuynhList()) {
+                modelPH.addRow(new Object[]{
+                        ph.getIDPHUHUYNH(),
+                        ph.getTENPHUHUYNH(),
+                        ph.getSDT(),
+                        ph.getEMAIL(),
+                        ph.getDIACHI(),
+                        ph.getHOTENHOCSINH()
+                });
+            }
+        };
+
+        // LOAD BAN ĐẦU
+        loadComboHocSinhPH.run();
+        loadTablePH.run();
+
+        // ================== SỰ KIỆN ==================
+
+        // CLICK TABLE
+        tablePH.getSelectionModel().addListSelectionListener(e -> {
+            int row = tablePH.getSelectedRow();
+            if (row >= 0) {
+                txtMaPH.setText(modelPH.getValueAt(row, 0).toString());
+                txtHovatenPH.setText(modelPH.getValueAt(row, 1).toString());
+                txtSodtPH.setText(modelPH.getValueAt(row, 2).toString());
+                txtEmailPH.setText(modelPH.getValueAt(row, 3).toString());
+                txtDiachiPH.setText(modelPH.getValueAt(row, 4).toString());
+            }
+        });
+
+        // THÊM
+        btnThemPH.addActionListener(e -> {
+            PhuHuynhDTO ph = new PhuHuynhDTO();
+            ph.setIDPHUHUYNH(txtMaPH.getText());
+            ph.setTENPHUHUYNH(txtHovatenPH.getText());
+            ph.setSDT(txtSodtPH.getText());
+            ph.setEMAIL(txtEmailPH.getText());
+            ph.setDIACHI(txtDiachiPH.getText());
+
+       
+            HocSinhDTO hs = (HocSinhDTO) cbChonphHS.getSelectedItem();
+            if (hs == null) {
+                JOptionPane.showMessageDialog(null, "Chưa có học sinh để chọn");
+                return;
+            }
+            ph.setIDHOCSINH(hs.getIDHOCSINH());
+
+            phuHuynhBLL.themPhuHuynh(ph);
+            loadTablePH.run();
+        });
+
+
+
+        // SỬA
+        btnSuaPH.addActionListener(e -> {
+            PhuHuynhDTO ph = new PhuHuynhDTO();
+            ph.setIDPHUHUYNH(txtMaPH.getText());
+            ph.setTENPHUHUYNH(txtHovatenPH.getText());
+            ph.setSDT(txtSodtPH.getText());
+            ph.setEMAIL(txtEmailPH.getText());
+            ph.setDIACHI(txtDiachiPH.getText());
+
+   
+            HocSinhDTO hs = (HocSinhDTO) cbChonphHS.getSelectedItem();
+            if (hs == null) {
+                JOptionPane.showMessageDialog(null, "Chưa có học sinh để chọn");
+                return;
+            }
+            ph.setIDHOCSINH(hs.getIDHOCSINH());
+
+            phuHuynhBLL.suaPhuHuynh(ph);
+            loadTablePH.run();
+        });
+
+
+        // XOÁ
+        btnXoaPH.addActionListener(e -> {
+            int row = tablePH.getSelectedRow();
+            if (row == -1) return;
+
+            String maPH = modelPH.getValueAt(row, 0).toString();
+            phuHuynhBLL.xoaPhuHuynh(maPH);
+            loadTablePH.run();
+        });
+
+        // TÌM
+        btnTimPH.addActionListener(e -> {
+            modelPH.setRowCount(0);
+            for (PhuHuynhDTO ph : phuHuynhBLL.timKiemPhuHuynh(txtTimPH.getText())) {
+                modelPH.addRow(new Object[]{
+                        ph.getIDPHUHUYNH(),
+                        ph.getTENPHUHUYNH(),
+                        ph.getSDT(),
+                        ph.getEMAIL(),
+                        ph.getDIACHI(),
+                        ph.getHOTENHOCSINH()
+                });
+            }
+        });
+
+        // HIỂN THỊ TẤT CẢ
+        btnHienthitatcaPH.addActionListener(e -> loadTablePH.run());
+
+        // LÀM MỚI
+        btnLammoiPH.addActionListener(e -> {
+            txtMaPH.setText("");
+            txtHovatenPH.setText("");
+            txtSodtPH.setText("");
+            txtEmailPH.setText("");
+            txtDiachiPH.setText("");
+            txtTimPH.setText("");
+            tablePH.clearSelection();
+        });
+
         
-        JPanel panel_5_3 = new JPanel();
-        panel_5_3.setLayout(null);
-        panel_5_3.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách phụ huynh"));
-        panel_5_3.setBounds(23, 257, 723, 320);
-        pPhuhuynh.add(panel_5_3);
         
+
      // ================= TAB TÀI KHOẢN =================
 
         pTaikhoan = new JPanel();
@@ -1542,4 +1818,28 @@ public class MainForm extends JFrame {
         SwingUtilities.invokeLater(() -> new MainForm().setVisible(true));
         
     }
+    private String chuyenNgay(String ngayNhap) {
+        try {
+            java.text.SimpleDateFormat f1 = new java.text.SimpleDateFormat("dd/MM/yyyy");
+            java.text.SimpleDateFormat f2 = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            return f2.format(f1.parse(ngayNhap));
+        } catch (Exception e) {
+            return ngayNhap; // nếu sai thì giữ nguyên
+        }
+    }
+    private void loadTableGV() {
+        modelGV.setRowCount(0);
+        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
+            modelGV.addRow(new Object[]{
+                gv.getIdGiaoVien(),
+                gv.getHoTen(),
+                gv.getGioiTinh() == 1 ? "Nam" : "Nữ",
+                gv.getNgaySinh(),
+                gv.getDiaChi(),
+                gv.getCccd(),
+                gv.getSdt()
+            });
+        }
+    }
+   
 }

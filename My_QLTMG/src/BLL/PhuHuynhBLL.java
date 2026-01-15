@@ -5,6 +5,8 @@ import DTO.PhuHuynhDTO;
 
 import java.sql.ResultSet;
 import java.util.List;
+import java.sql.ResultSet;
+import DTO.HocSinhDTO;
 
 public class PhuHuynhBLL {
 
@@ -29,7 +31,7 @@ public class PhuHuynhBLL {
     // ==============================
     // LẤY DANH SÁCH HỌC SINH (COMBOBOX)
     // ==============================
-    public ResultSet getDanhSachHocSinh() {
+    public List<HocSinhDTO> getDanhSachHocSinh() {
         return phuHuynhDAL.getDanhSachHocSinh();
     }
 
@@ -97,3 +99,4 @@ public class PhuHuynhBLL {
         return list;
     }
 }
+

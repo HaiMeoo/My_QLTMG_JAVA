@@ -93,9 +93,10 @@ public class HocSinhBLL {
     // ==============================
     public Date parseNgaySinh(String ngaySinh) throws Exception {
         try {
-            return new SimpleDateFormat("yyyy-MM-dd").parse(ngaySinh);
+            return new SimpleDateFormat("dd/MM/yyyy").parse(ngaySinh);
         } catch (Exception e) {
-            throw new Exception("Ngày sinh không hợp lệ (yyyy-MM-dd).");
+            throw new Exception("Ngày sinh phải đúng định dạng dd/MM/yyyy (vd: 06/04/04)");
         }
     }
+
 }

@@ -46,4 +46,9 @@ public class GiaoVienDTO {
 
     public String getSdt() { return sdt; }
     public void setSdt(String sdt) { this.sdt = sdt; }
+    @Override
+    public String toString() {
+        return hoTen;
+    }
 }
+
