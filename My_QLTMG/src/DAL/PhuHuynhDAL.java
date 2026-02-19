@@ -1,6 +1,7 @@
 package DAL;
 
 import DTO.PhuHuynhDTO;
+
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,9 +23,10 @@ public class PhuHuynhDAL {
 
         String query =
         	    "SELECT P.IDPHUHUYNH, P.TENPHUHUYNH, P.SDT, P.EMAIL, P.DIACHI, " +
-        	    "H.IDHOCSINH, H.HOTEN AS HOTENHOCSINH " +
+        	    "H.IDHOCSINH, H.HOTENHOCSINH " +
         	    "FROM PHUHUYNH P " +
         	    "JOIN HOCSINH H ON P.IDHOCSINH = H.IDHOCSINH";
+
 
 
         try {
@@ -148,7 +150,7 @@ public class PhuHuynhDAL {
 
         String query =
         	    "SELECT P.IDPHUHUYNH, P.TENPHUHUYNH, P.SDT, P.EMAIL, P.DIACHI, " +
-        	    "H.IDHOCSINH, H.HOTEN AS HOTENHOCSINH " +
+        	    		"H.IDHOCSINH, H.HOTENHOCSINH " +
         	    "FROM PHUHUYNH P " +
         	    "LEFT JOIN HOCSINH H ON P.IDHOCSINH = H.IDHOCSINH " +
         	    "WHERE P.IDPHUHUYNH LIKE ? OR P.TENPHUHUYNH LIKE ?";

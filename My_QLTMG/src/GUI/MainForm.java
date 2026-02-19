@@ -6,14 +6,26 @@ import javax.swing.border.Border;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import javax.swing.JTable;
+import java.time.LocalDate;
+import javax.swing.JScrollPane;
+import javax.swing.JOptionPane;
+import javax.swing.ListSelectionModel;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import javax.swing.plaf.basic.BasicComboPopup;
+import java.awt.Dimension;
 
 import BLL.TaiKhoanBLL;
 import DTO.TaiKhoanDTO;
-
+import DTO.DiemDanhDTO;
+import BLL.DiemDanhBLL;
 import BLL.GiaoVienBLL;
 import DTO.GiaoVienDTO;
 import BLL.LopHocBLL;
@@ -22,18 +34,185 @@ import BLL.HocSinhBLL;
 import DTO.HocSinhDTO;
 import BLL.PhuHuynhBLL;
 import DTO.PhuHuynhDTO;
+import BLL.LichDayBLL;
+import DTO.LichDayDTO;
+import BLL.BaoCaoSucKhoeBLL;
+import DTO.BaoCaoSucKhoeDTO;
+import BLL.ChitietNGHBLL;
+import DTO.ChitietNGHDTO;
+
+
 
 public class MainForm extends JFrame {
 	
 	// KHAI BÁO CÁC LỚP BLL
 	private TaiKhoanBLL taiKhoanBLL = new TaiKhoanBLL();
 	private DefaultTableModel modelTaiKhoan;
-
-
+	private LichDayBLL lichDayBLL = new LichDayBLL();
+	private DefaultTableModel modelDD;
+	private DiemDanhBLL diemDanhBLL = new DiemDanhBLL();
+	private HocSinhBLL hocSinhBLL = new HocSinhBLL();
+	private PhuHuynhBLL phuHuynhBLL;
+	private JTable tableBCSK;  
+	private JScrollPane spBCSK;
+	private DefaultTableModel modelBCSK;
+	private BaoCaoSucKhoeBLL bcskBLL = new BaoCaoSucKhoeBLL();
+	private LopHocBLL lopHocBLL = new LopHocBLL();
+	private DefaultTableModel modelLD;
+	private JComboBox<HocSinhDTO> cbChonhsGH;
+	private JComboBox<PhuHuynhDTO> cbChonphGHhs;
+	private JComboBox<LopHocDTO> cbLopHocHocSinh;
+	private JComboBox<HocSinhDTO> cbTenHocSinhPH;
+	private JComboBox<GiaoVienDTO> cbChonGVDD;
+	private JComboBox<HocSinhDTO> cbChonHSDD;
+	private JComboBox<LopHocDTO> cbChonlophsDD;
+	private JComboBox<GiaoVienDTO> cbChonGVLD;
+	private JComboBox<LopHocDTO> cbChonLopLD;
+	private JComboBox<LopHocDTO> cbChonlopSK;
+	private JComboBox<GiaoVienDTO> cbChongvSK;
+	private JComboBox<HocSinhDTO> cbChonHSSK;
 	private GiaoVienBLL giaoVienBLL = new GiaoVienBLL();
 	private DefaultTableModel modelGV;
+	private JTabbedPane tabbedPane;
+	private ChitietNGHBLL chitietNGHBLL = new ChitietNGHBLL();
+	private JTable tableNGH;
+	private DefaultTableModel modelNGH;
+	private JScrollPane scrollingNGH;
 	private JTable tableGV;
+	private JTable tableLD;
+	private JTable tableDD;
+	private Runnable loadComboGV;
+	private JComboBox<GiaoVienDTO> cbChonGVchunhiemlop;
+	private Runnable loadTableLop;
+	private Runnable loadComboLopHoc;
+	
 	JComboBox<HocSinhDTO> cbChonphHS = new JComboBox<>();
+	private JComboBox<GiaoVienDTO> cbGVCN;
+	private String[] colBCSK = {
+		    "Mã báo cáo",
+		    "Ngày khám",
+		    "Cân nặng",
+		    "Chiều cao",
+		    "Tình trạng",
+		    "Học sinh",
+		    "Lớp",
+		    "Giáo viên"
+		};
+	private void loadComboGVCN() {
+	    DefaultComboBoxModel<GiaoVienDTO> model = new DefaultComboBoxModel<>();
+
+	    List<GiaoVienDTO> listGV = giaoVienBLL.getGiaoVienDangCoLop();
+
+	    for (GiaoVienDTO gv : listGV) {
+	        model.addElement(gv);
+	    }
+
+	    cbGVCN.setModel(model);
+	}
+	private void loadComboLopHoc() {
+	    if (cbLopHocHocSinh == null) return;
+
+	    DefaultComboBoxModel<LopHocDTO> model = new DefaultComboBoxModel<>();
+
+	    List<LopHocDTO> list = lopHocBLL.getAll(); 
+
+	    for (LopHocDTO lop : list) {
+	        model.addElement(lop);
+	    }
+
+	    cbLopHocHocSinh.setModel(model);
+	}
+
+	private void loadComboHocSinhPhuHuynh() {
+	    DefaultComboBoxModel<HocSinhDTO> model = new DefaultComboBoxModel<>();
+
+	    for (HocSinhDTO hs : hocSinhBLL.getHocSinhList()) {
+	        model.addElement(hs);
+	    }
+
+	    cbTenHocSinhPH.setModel(model);
+	}
+	
+	private void initComponents() {
+	    setTitle("Main Form");
+	    setSize(1200, 700);
+	    setLocationRelativeTo(null);
+	    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	    getContentPane().setLayout(new BorderLayout());
+
+	    tabbedPane = new JTabbedPane();
+
+	    // ================= TAB LỚP HỌC =================
+	    JPanel panelLopHoc = new JPanel();
+	    panelLopHoc.setLayout(null);
+	    cbTenHocSinhPH = new JComboBox<>();
+
+	    cbGVCN = new JComboBox<>();
+	    cbGVCN.setBounds(100, 100, 250, 30);
+	    panelLopHoc.add(cbGVCN);
+
+	    tabbedPane.addTab("Lớp học", panelLopHoc);
+
+	 // ================= TAB ĐIỂM DANH =================
+	    JPanel panelDiemDanh = new JPanel();
+	    panelDiemDanh.setLayout(null);
+
+	    
+	    cbChonlophsDD = new JComboBox<>();
+	    cbChonlophsDD.setBounds(150, 80, 200, 25);
+	    panelDiemDanh.add(cbChonlophsDD);
+	 
+	    cbChonHSDD = new JComboBox<>();
+	    cbChonHSDD.setBounds(150, 120, 200, 25);
+	    panelDiemDanh.add(cbChonHSDD);
+	    
+	 
+	    cbChonGVDD = new JComboBox<>();
+	    cbChonGVDD.setBounds(150, 120, 200, 25);
+	    panelDiemDanh.add(cbChonGVDD);
+
+
+	    // add tab
+	    tabbedPane.addTab("Điểm danh", panelDiemDanh);
+	    
+	    // ================= ADD TABPANE =================
+	    getContentPane().add(tabbedPane, BorderLayout.CENTER);
+
+	    // ================= EVENT CHỌN TAB =================
+	    tabbedPane.addChangeListener(e -> {
+	        if (tabbedPane.getSelectedIndex() != -1 &&
+	            tabbedPane.getTitleAt(tabbedPane.getSelectedIndex())
+	                     .equals("Lớp học")) {
+
+	        	loadComboGVCN();
+	        }
+	    });
+	    
+	   
+	}
+	
+	private void fixComboBoxWidth(JComboBox<?> comboBox) {
+	    comboBox.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
+	        @Override
+	        public void popupMenuWillBecomeVisible(javax.swing.event.PopupMenuEvent e) {
+	            Object comp = comboBox.getUI().getAccessibleChild(comboBox, 0);
+	            if (comp instanceof BasicComboPopup) {
+	                JScrollPane scrollPane =
+	                        (JScrollPane) ((BasicComboPopup) comp).getComponent(0);
+
+	                scrollPane.setPreferredSize(
+	                        new Dimension(
+	                                comboBox.getWidth(),
+	                                scrollPane.getPreferredSize().height
+	                        )
+	                );
+	            }
+	        }
+
+	        @Override public void popupMenuWillBecomeInvisible(javax.swing.event.PopupMenuEvent e) {}
+	        @Override public void popupMenuCanceled(javax.swing.event.PopupMenuEvent e) {}
+	    });
+	}
 
 
 	
@@ -101,9 +280,64 @@ public class MainForm extends JFrame {
     private JTextField txtGioitinhGV;
 
     public MainForm() {
+        hocSinhBLL = new HocSinhBLL();
+        giaoVienBLL = new GiaoVienBLL();
+        phuHuynhBLL = new PhuHuynhBLL();
+    	initComponents(); 
+    	initLichDay();	
+        initTableNguoiGiamHo();
+        initBaoCaoSucKhoe();
+        initTabDiemDanhEvent();
+        initComboDiemDanhEvent();
+        modelBCSK = new DefaultTableModel(
+        	    new String[]{
+        	        "Mã BC", "Ngày khám", "Cân nặng", "Chiều cao",
+        	        "Tình trạng", "Học sinh", "Lớp", "Giáo viên"
+        	    }, 0
+        	);
+
+
+
+        modelDD = new DefaultTableModel(
+            new Object[]{
+                "Mã điểm danh",
+                "Học sinh",
+                "Lớp",
+                "Ngày điểm danh",
+                "Trạng thái",
+                "Lý do",
+                "Giáo viên"
+            }, 0
+        );
+        SwingUtilities.invokeLater(() -> {
+            loadDanhSachDiemDanh();
+            loadComboBoxLopDiemDanh();
+            loadComboBoxGiaoVienDiemDanh();
+            loadComboBoxLichDay();
+            loadDanhSachLichDay();
+        	loadComboBoxBCSK();
+            loadDanhSachBaoCaoSucKhoe();
+        	loadComboBoxNGH();
+            loadDanhSachNguoiGiamHo();
+        	loadComboGVCN(); 
+        	loadComboHocSinhPhuHuynh();
+        });
+
+    	 tabbedPane.addChangeListener(e -> {
+    	        int index = tabbedPane.getSelectedIndex();
+    	        String title = tabbedPane.getTitleAt(index);
+
+    	        if (title.equals("Học Sinh")) {
+    	            loadComboGVCN();
+    	        }
+    	    });
+    	
+        fixComboBoxWidth(cbGVCN);
+        
     	getContentPane().setBackground(new Color(255, 192, 203));
     	setBackground(new Color(255, 182, 193));
         getContentPane().setLayout(null);
+        
         
         // ================= PANEL BUTTON =================
         
@@ -174,6 +408,7 @@ public class MainForm extends JFrame {
         tabbedPane.setBounds(112, 50, 862, 611);
         getContentPane().add(tabbedPane);
 
+        
         
      // ================= TAB GIÁO VIÊN =================
         JPanel pGiaovien = new JPanel(null);
@@ -298,40 +533,149 @@ public class MainForm extends JFrame {
         });
 
         btnThemGV.addActionListener(e -> {
-            GiaoVienDTO gv = new GiaoVienDTO();
-            gv.setIdGiaoVien(txtMaGV.getText());
-            gv.setHoTen(txtHotenGV.getText());
-            gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
-            gv.setNgaySinh(chuyenNgay(txtNgaysinhGV.getText()));
-            gv.setDiaChi(txtDiachiGV.getText());
-            gv.setCccd(txtCmtGV.getText());
-            gv.setSdt(txtSdtGV.getText());
+            try {
+                GiaoVienDTO gv = new GiaoVienDTO();
+                gv.setIdGiaoVien(txtMaGV.getText());
+                gv.setHoTen(txtHotenGV.getText());
+                gv.setGioiTinh(cbGioiTinhGV.getSelectedIndex());
+                gv.setNgaySinh(chuyenNgay(txtNgaysinhGV.getText()));
+                gv.setDiaChi(txtDiachiGV.getText());
+                gv.setCccd(txtCmtGV.getText());
+                gv.setSdt(txtSdtGV.getText());
 
-            giaoVienBLL.them(gv);
-            loadTableGV();
+                giaoVienBLL.them(gv);
+             // sau khi them giao vien thanh cong
+                if (loadComboGV != null) {
+                    loadComboGV.run();
+                }
+
+
+                loadTableGV();       
+                loadComboGVCN();    
+
+                JOptionPane.showMessageDialog(null, "Thêm giáo viên thành công!");
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
         });
-
+        
         btnSuaGV.addActionListener(e -> {
-            GiaoVienDTO gv = new GiaoVienDTO();
-            gv.setIdGiaoVien(txtMaGV.getText());
-            gv.setHoTen(txtHotenGV.getText());
-            gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
-            gv.setNgaySinh(chuyenNgay(txtNgaysinhGV.getText()));
-            gv.setDiaChi(txtDiachiGV.getText());
-            gv.setCccd(txtCmtGV.getText());
-            gv.setSdt(txtSdtGV.getText());
 
-            giaoVienBLL.sua(gv);
-            loadTableGV();
+           
+            if (txtMaGV.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng chọn giáo viên cần sửa!",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+         
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc muốn cập nhật thông tin giáo viên này?",
+                "Xác nhận sửa",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+
+            if (confirm != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            try {
+               
+                GiaoVienDTO gv = new GiaoVienDTO();
+                gv.setIdGiaoVien(txtMaGV.getText());
+                gv.setHoTen(txtHotenGV.getText());
+                gv.setGioiTinh(cbGioiTinhGV.getSelectedItem().equals("Nam") ? 1 : 0);
+                gv.setNgaySinh(chuyenNgay(txtNgaysinhGV.getText()));
+                gv.setDiaChi(txtDiachiGV.getText());
+                gv.setCccd(txtCmtGV.getText());
+                gv.setSdt(txtSdtGV.getText());
+
+              
+                giaoVienBLL.sua(gv);
+
+               
+                loadTableGV();
+
+               
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Cập nhật giáo viên thành công!",
+                    "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+
+            } catch (Exception ex) {
+                
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Cập nhật thất bại!\n" + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE
+                );
+            }
         });
+
 
         btnXoaGV.addActionListener(e -> {
             int row = tableGV.getSelectedRow();
-            if (row != -1) {
-                giaoVienBLL.xoa(modelGV.getValueAt(row, 0).toString());
-                loadTableGV();
+
+           
+            if (row == -1) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Vui lòng chọn giáo viên cần xóa!",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+           
+            String idGV = tableGV.getValueAt(row, 0).toString();
+
+            
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc muốn xóa giáo viên này?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE
+            );
+
+           
+            if (confirm == JOptionPane.YES_OPTION) {
+                boolean kq = giaoVienBLL.xoa(idGV);
+
+                if (kq) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Xóa giáo viên thành công!",
+                        "Thành công",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+
+              
+                    loadTableGV();
+                    loadComboGVCN();
+
+                } else {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Không thể xóa giáo viên!\nGiáo viên đang được sử dụng.",
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE
+                    );
+                }
             }
         });
+
 
         btnTimGV.addActionListener(e -> {
             modelGV.setRowCount(0);
@@ -413,7 +757,7 @@ public class MainForm extends JFrame {
         lblGVCN.setBounds(356, 34, 150, 15);
         panel_3.add(lblGVCN);
 
-        JComboBox<GiaoVienDTO> cbChonGVchunhiemlop = new JComboBox<>();
+        cbChonGVchunhiemlop = new JComboBox<>();
         cbChonGVchunhiemlop.setBounds(510, 30, 200, 22);
         panel_3.add(cbChonGVchunhiemlop);
 
@@ -470,17 +814,18 @@ public class MainForm extends JFrame {
         panel_5_1.add(scrollLop);
 
         // ================== LOAD COMBO GV ==================
-        Runnable loadComboGV = () -> {
+        loadComboGV = () -> {
             cbChonGVchunhiemlop.removeAllItems();
             for (GiaoVienDTO gv : giaoVienBLL_Lop.getAll()) {
                 cbChonGVchunhiemlop.addItem(gv);
             }
         };
 
+
         // ================== LOAD TABLE ==================
         Runnable loadTableLop = () -> {
             modelLop.setRowCount(0);
-            for (LopHocDTO lop : lopHocBLL.getLopHocList()) {
+            for (LopHocDTO lop : lopHocBLL.getAll()) {
                 modelLop.addRow(new Object[]{
                         lop.getIDLOP(),
                         lop.getTENLOP(),
@@ -508,44 +853,184 @@ public class MainForm extends JFrame {
 
         // THÊM
         btnThemlop.addActionListener(e -> {
-            GiaoVienDTO gv = (GiaoVienDTO) cbChonGVchunhiemlop.getSelectedItem();
 
-            lopHocBLL.themLopHoc(
-                    txtMalop.getText(),
-                    txtTenlop.getText(),
-                    Integer.parseInt(textField_16.getText()),
-                    gv.getIdGiaoVien()
-            );
-            loadTableLop.run();
+          
+            if (txtMalop.getText().trim().isEmpty()
+                    || txtTenlop.getText().trim().isEmpty()
+                    || textField_16.getText().trim().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng điền đầy đủ thông tin lớp học!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+        
+            GiaoVienDTO gv = (GiaoVienDTO) cbChonGVchunhiemlop.getSelectedItem();
+            if (gv == null) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng chọn giáo viên chủ nhiệm!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+           
+            int siSo;
+            try {
+                siSo = Integer.parseInt(textField_16.getText().trim());
+                if (siSo <= 0) {
+                    JOptionPane.showMessageDialog(null, "Sĩ số phải lớn hơn 0!");
+                    return;
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, "Sĩ số phải là số nguyên!");
+                return;
+            }
+
+           
+            try {
+                lopHocBLL.themLopHoc(
+                        txtMalop.getText().trim(),
+                        txtTenlop.getText().trim(),
+                        siSo,
+                        gv.getIdGiaoVien()
+                );
+
+                loadTableLop.run();
+                loadComboGVCN();      
+                loadComboHocSinhPhuHuynh();
+                loadComboLopHoc();
+                JOptionPane.showMessageDialog(null, "Thêm lớp học thành công!");
+                txtTimLop.setText("");     // reset tìm kiếm
+                tableLop.clearSelection();
+                loadTableLop.run();       // load full danh sách
+
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
         });
+
 
         // SỬA
         btnSualop.addActionListener(e -> {
-            GiaoVienDTO gv = (GiaoVienDTO) cbChonGVchunhiemlop.getSelectedItem();
 
-            lopHocBLL.suaLopHoc(
-                    txtMalop.getText(),
-                    txtTenlop.getText(),
-                    Integer.parseInt(textField_16.getText()),
-                    gv.getIdGiaoVien()
-            );
-            loadTableLop.run();
+            
+            int row = tableLop.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng chọn lớp học cần sửa!",
+                        "Chưa chọn lớp",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+          
+            if (txtTenlop.getText().trim().isEmpty()
+                    || textField_16.getText().trim().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng điền đầy đủ thông tin để sửa!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            GiaoVienDTO gv = (GiaoVienDTO) cbChonGVchunhiemlop.getSelectedItem();
+            if (gv == null) {
+                JOptionPane.showMessageDialog(null, "Vui lòng chọn giáo viên chủ nhiệm!");
+                return;
+            }
+
+            int siSo;
+            try {
+                siSo = Integer.parseInt(textField_16.getText().trim());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(null, "Sĩ số phải là số!");
+                return;
+            }
+
+            // 👉 SỬA
+            try {
+                lopHocBLL.suaLopHoc(
+                        txtMalop.getText(),
+                        txtTenlop.getText(),
+                        siSo,
+                        gv.getIdGiaoVien()
+                );
+
+                loadTableLop.run();
+                JOptionPane.showMessageDialog(null, "Cập nhật lớp học thành công!");
+                txtTimLop.setText("");     // reset tìm kiếm
+                tableLop.clearSelection();
+                loadTableLop.run();       // load full danh sách
+
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
         });
+
+
 
         // XÓA
         btnXoalop.addActionListener(e -> {
             int row = tableLop.getSelectedRow();
-            if (row == -1) return;
+            if (row == -1) {
+                JOptionPane.showMessageDialog(null, "Vui lòng chọn lớp cần xóa!");
+                return;
+            }
 
-            String maLop = modelLop.getValueAt(row, 0).toString();
-            lopHocBLL.xoaLopHoc(maLop);
-            loadTableLop.run();
+            int confirm = JOptionPane.showConfirmDialog(
+                    null,
+                    "Bạn có chắc muốn xóa lớp học này?",
+                    "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            try {
+                String maLop = modelLop.getValueAt(row, 0).toString();
+                lopHocBLL.xoaLopHoc(maLop);
+                loadTableLop.run();
+                loadComboLopHoc();
+                loadComboGVCN();
+                loadComboHocSinhPhuHuynh();
+
+                JOptionPane.showMessageDialog(null, "🗑️ Xóa lớp học thành công!");
+                txtTimLop.setText("");
+                loadTableLop.run();
+
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, ex.getMessage());
+            }
         });
+
 
         // TÌM
         btnTimlop.addActionListener(e -> {
             modelLop.setRowCount(0);
-            for (LopHocDTO lop : lopHocBLL.timKiemLopHoc(txtTimLop.getText())) {
+
+            var ketQua = lopHocBLL.timKiemLopHoc(txtTimLop.getText());
+
+            if (ketQua.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "❌ Không tìm thấy lớp học phù hợp!");
+                return;
+            }
+
+            for (LopHocDTO lop : ketQua) {
                 modelLop.addRow(new Object[]{
                         lop.getIDLOP(),
                         lop.getTENLOP(),
@@ -554,6 +1039,7 @@ public class MainForm extends JFrame {
                 });
             }
         });
+
 
         // HIỂN THỊ TẤT CẢ
         btnHienthitatcalop.addActionListener(e -> loadTableLop.run());
@@ -577,7 +1063,7 @@ public class MainForm extends JFrame {
 
         // ===== BLL =====
         HocSinhBLL hocSinhBLL = new HocSinhBLL();
-        LopHocBLL lopHocBLL_HS = new LopHocBLL();
+       
 
         // ================== PANEL THÔNG TIN ==================
         JPanel panelHS = new JPanel(null);
@@ -597,7 +1083,7 @@ public class MainForm extends JFrame {
         panelHS.add(txtTenHS);
 
         panelHS.add(new JLabel("Ngày sinh:")).setBounds(20, 90, 80, 15);
-        JTextField txtNgaySinhHS = new JTextField("06/04/04");
+        JTextField txtNgaySinhHS = new JTextField();
         txtNgaySinhHS.setBounds(110, 87, 150, 20);
         panelHS.add(txtNgaySinhHS);
 
@@ -669,7 +1155,8 @@ public class MainForm extends JFrame {
         // ================== LOAD COMBO LỚP ==================
         Runnable loadComboLopHS = () -> {
             cbLopHS.removeAllItems();
-            for (LopHocDTO lop : lopHocBLL_HS.getLopHocList()) {
+            for (LopHocDTO lop : lopHocBLL.getAll())
+ {
                 cbLopHS.addItem(lop);
             }
         };
@@ -677,13 +1164,13 @@ public class MainForm extends JFrame {
         // ================== LOAD TABLE ==================
         Runnable loadTableHS = () -> {
             modelHS.setRowCount(0);
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy");
+            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
 
             for (HocSinhDTO hs : hocSinhBLL.getHocSinhList()) {
                 modelHS.addRow(new Object[]{
                         hs.getIDHOCSINH(),
                         hs.getHOTENHOCSINH(),
-                        hs.getGIOITINH() == 1 ? "Nam" : "Nữ",
+                        hs.getGIOITINH() == 0 ? "Nam" : "Nữ",
                         sdf.format(hs.getNGAYSINH()),
                         hs.getDIACHI(),
                         hs.getTENLOP()
@@ -709,6 +1196,44 @@ public class MainForm extends JFrame {
 
         // ================== THÊM ==================
         btnThemHS.addActionListener(e -> {
+
+            // ===== 1. KIỂM TRA RỖNG =====
+            if (txtMaHS.getText().trim().isEmpty()
+                    || txtTenHS.getText().trim().isEmpty()
+                    || txtNgaySinhHS.getText().trim().isEmpty()
+                    || txtDiaChiHS.getText().trim().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng điền đầy đủ thông tin học sinh!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // ===== 2. KIỂM TRA CHỌN LỚP =====
+            if (cbLopHS.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(null, "Vui lòng chọn lớp!");
+                return;
+            }
+
+            // ===== 3. KIỂM TRA NGÀY SINH =====
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                sdf.setLenient(false);
+                sdf.parse(txtNgaySinhHS.getText().trim());
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Ngày sinh không hợp lệ (định dạng dd/MM/yyyy)",
+                        "Sai ngày sinh",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            
             try {
                 HocSinhDTO hs = new HocSinhDTO();
                 hs.setIDHOCSINH(txtMaHS.getText());
@@ -719,12 +1244,14 @@ public class MainForm extends JFrame {
                 LopHocDTO lop = (LopHocDTO) cbLopHS.getSelectedItem();
                 hs.setIDLOP(lop.getIDLOP());
 
-                Date ns = new SimpleDateFormat("dd/MM/yy").parse(txtNgaySinhHS.getText());
+                Date ns = new SimpleDateFormat("dd/MM/yyyy").parse(txtNgaySinhHS.getText());
                 hs.setNGAYSINH(ns);
 
                 hocSinhBLL.themHocSinh(hs);
                 loadTableHS.run();
+                loadComboHocSinhPhuHuynh();
                 JOptionPane.showMessageDialog(null, "Thêm học sinh thành công!");
+
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
@@ -732,6 +1259,56 @@ public class MainForm extends JFrame {
 
         // ================== SỬA ==================
         btnSuaHS.addActionListener(e -> {
+
+            // ===== 1. KIỂM TRA CHỌN DÒNG =====
+            int row = tableHS.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng chọn học sinh cần sửa!",
+                        "Chưa chọn học sinh",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // ===== 2. KIỂM TRA RỖNG =====
+            if (txtMaHS.getText().trim().isEmpty()
+                    || txtTenHS.getText().trim().isEmpty()
+                    || txtNgaySinhHS.getText().trim().isEmpty()
+                    || txtDiaChiHS.getText().trim().isEmpty()) {
+
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng điền đầy đủ thông tin học sinh!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            // ===== 3. KIỂM TRA CHỌN LỚP =====
+            if (cbLopHS.getSelectedItem() == null) {
+                JOptionPane.showMessageDialog(null, "Vui lòng chọn lớp!");
+                return;
+            }
+
+            // ===== 4. KIỂM TRA NGÀY SINH =====
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                sdf.setLenient(false);
+                sdf.parse(txtNgaySinhHS.getText().trim());
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Ngày sinh không hợp lệ (dd/MM/yyyy)",
+                        "Sai ngày sinh",
+                        JOptionPane.ERROR_MESSAGE
+                );
+                return;
+            }
+
+            // ===== 5. GIỮ NGUYÊN DTO =====
             try {
                 HocSinhDTO hs = new HocSinhDTO();
                 hs.setIDHOCSINH(txtMaHS.getText());
@@ -742,11 +1319,14 @@ public class MainForm extends JFrame {
                 LopHocDTO lop = (LopHocDTO) cbLopHS.getSelectedItem();
                 hs.setIDLOP(lop.getIDLOP());
 
-                Date ns = new SimpleDateFormat("dd/MM/yy").parse(txtNgaySinhHS.getText());
+                Date ns = new SimpleDateFormat("dd/MM/yyyy").parse(txtNgaySinhHS.getText());
                 hs.setNGAYSINH(ns);
 
                 hocSinhBLL.suaHocSinh(hs);
                 loadTableHS.run();
+
+                JOptionPane.showMessageDialog(null, "Cập nhật học sinh thành công!");
+
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(null, ex.getMessage());
             }
@@ -754,16 +1334,40 @@ public class MainForm extends JFrame {
 
         // ================== XOÁ ==================
         btnXoaHS.addActionListener(e -> {
-            int row = tableHS.getSelectedRow();
-            if (row == -1) return;
 
-            try {
-                hocSinhBLL.xoaHocSinh(modelHS.getValueAt(row, 0).toString());
-                loadTableHS.run();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(null, ex.getMessage());
+            int row = tableHS.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng chọn học sinh cần xóa!",
+                        "Chưa chọn học sinh",
+                        JOptionPane.WARNING_MESSAGE
+                );
+                return;
+            }
+
+            String maHS = modelHS.getValueAt(row, 0).toString();
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    null,
+                    "Bạn có chắc muốn xóa học sinh này?",
+                    "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    hocSinhBLL.xoaHocSinh(maHS);
+                    loadTableHS.run();
+
+                    JOptionPane.showMessageDialog(null, "Xóa học sinh thành công!");
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(null, ex.getMessage());
+                }
             }
         });
+
 
         // ================== TÌM ==================
         btnTimHS.addActionListener(e -> {
@@ -774,7 +1378,7 @@ public class MainForm extends JFrame {
                             hs.getIDHOCSINH(),
                             hs.getHOTENHOCSINH(),
                             hs.getGIOITINH() == 1 ? "Nam" : "Nữ",
-                            new SimpleDateFormat("dd/MM/yy").format(hs.getNGAYSINH()),
+                            new SimpleDateFormat("dd/MM/yyyy").format(hs.getNGAYSINH()),
                             hs.getDIACHI(),
                             hs.getTENLOP()
                     });
@@ -796,6 +1400,8 @@ public class MainForm extends JFrame {
             txtTimHS.setText("");
             tableHS.clearSelection();
         });
+        
+        
         
         
      // ================= TAB PHỤ HUYNH =================
@@ -943,71 +1549,237 @@ public class MainForm extends JFrame {
 
         // THÊM
         btnThemPH.addActionListener(e -> {
-            PhuHuynhDTO ph = new PhuHuynhDTO();
-            ph.setIDPHUHUYNH(txtMaPH.getText());
-            ph.setTENPHUHUYNH(txtHovatenPH.getText());
-            ph.setSDT(txtSodtPH.getText());
-            ph.setEMAIL(txtEmailPH.getText());
-            ph.setDIACHI(txtDiachiPH.getText());
+            try {
+                PhuHuynhDTO ph = new PhuHuynhDTO();
+                ph.setIDPHUHUYNH(txtMaPH.getText().trim());
+                ph.setTENPHUHUYNH(txtHovatenPH.getText().trim());
+                ph.setSDT(txtSodtPH.getText().trim());
+                ph.setEMAIL(txtEmailPH.getText().trim());
+                ph.setDIACHI(txtDiachiPH.getText().trim());
 
-       
-            HocSinhDTO hs = (HocSinhDTO) cbChonphHS.getSelectedItem();
-            if (hs == null) {
-                JOptionPane.showMessageDialog(null, "Chưa có học sinh để chọn");
-                return;
+                HocSinhDTO hs = (HocSinhDTO) cbChonphHS.getSelectedItem();
+                if (hs == null) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Chưa có học sinh để chọn",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+                ph.setIDHOCSINH(hs.getIDHOCSINH());
+
+                // ⭐ DÒNG CÓ THỂ THROW IllegalArgumentException
+                phuHuynhBLL.themPhuHuynh(ph);
+
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Thêm phụ huynh thành công!",
+                    "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+
+                loadTablePH.run();
+
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    ex.getMessage(),
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE
+                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Có lỗi xảy ra khi thêm phụ huynh!",
+                    "Lỗi hệ thống",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                ex.printStackTrace();
             }
-            ph.setIDHOCSINH(hs.getIDHOCSINH());
-
-            phuHuynhBLL.themPhuHuynh(ph);
-            loadTablePH.run();
         });
-
 
 
         // SỬA
         btnSuaPH.addActionListener(e -> {
-            PhuHuynhDTO ph = new PhuHuynhDTO();
-            ph.setIDPHUHUYNH(txtMaPH.getText());
-            ph.setTENPHUHUYNH(txtHovatenPH.getText());
-            ph.setSDT(txtSodtPH.getText());
-            ph.setEMAIL(txtEmailPH.getText());
-            ph.setDIACHI(txtDiachiPH.getText());
+            try {
+                // 1️⃣ Kiểm tra có chọn dòng chưa
+                if (txtMaPH.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Vui lòng chọn phụ huynh cần sửa!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
 
-   
-            HocSinhDTO hs = (HocSinhDTO) cbChonphHS.getSelectedItem();
-            if (hs == null) {
-                JOptionPane.showMessageDialog(null, "Chưa có học sinh để chọn");
+                // 2️⃣ Xác nhận sửa
+                int confirm = JOptionPane.showConfirmDialog(
+                    this,
+                    "Bạn có chắc chắn muốn sửa thông tin phụ huynh không?",
+                    "Xác nhận sửa",
+                    JOptionPane.YES_NO_OPTION
+                );
+
+                if (confirm != JOptionPane.YES_OPTION) {
+                    return;
+                }
+
+                // 3️⃣ Lấy dữ liệu từ form
+                PhuHuynhDTO ph = new PhuHuynhDTO();
+                ph.setIDPHUHUYNH(txtMaPH.getText().trim());
+                ph.setTENPHUHUYNH(txtHovatenPH.getText().trim());
+                ph.setSDT(txtSodtPH.getText().trim());
+                ph.setEMAIL(txtEmailPH.getText().trim());
+                ph.setDIACHI(txtDiachiPH.getText().trim());
+
+                HocSinhDTO hs = (HocSinhDTO) cbChonphHS.getSelectedItem();
+                if (hs == null) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Chưa có học sinh để chọn",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+                ph.setIDHOCSINH(hs.getIDHOCSINH());
+
+                // 4️⃣ Gọi BLL (có thể throw IllegalArgumentException)
+                phuHuynhBLL.suaPhuHuynh(ph);
+
+                // 5️⃣ Thông báo thành công
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Sửa thông tin phụ huynh thành công!",
+                    "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE
+                );
+
+                // 6️⃣ Reload bảng
+                loadTablePH.run();
+
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    ex.getMessage(),
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE
+                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Có lỗi xảy ra khi sửa phụ huynh!",
+                    "Lỗi hệ thống",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                ex.printStackTrace();
+            }
+        });
+
+
+
+     // ================== XOÁ PHỤ HUYNH ==================
+        btnXoaPH.addActionListener(e -> {
+
+            int row = tablePH.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Vui lòng chọn phụ huynh cần xóa!",
+                        "Chưa chọn phụ huynh",
+                        JOptionPane.WARNING_MESSAGE
+                );
                 return;
             }
-            ph.setIDHOCSINH(hs.getIDHOCSINH());
-
-            phuHuynhBLL.suaPhuHuynh(ph);
-            loadTablePH.run();
-        });
-
-
-        // XOÁ
-        btnXoaPH.addActionListener(e -> {
-            int row = tablePH.getSelectedRow();
-            if (row == -1) return;
 
             String maPH = modelPH.getValueAt(row, 0).toString();
-            phuHuynhBLL.xoaPhuHuynh(maPH);
-            loadTablePH.run();
+
+            int confirm = JOptionPane.showConfirmDialog(
+                    null,
+                    "Bạn có chắc muốn xóa phụ huynh này?",
+                    "Xác nhận xóa",
+                    JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    phuHuynhBLL.xoaPhuHuynh(maPH);
+                    loadTablePH.run();
+
+                    JOptionPane.showMessageDialog(
+                            null,
+                            "Xóa phụ huynh thành công!",
+                            "Thành công",
+                            JOptionPane.INFORMATION_MESSAGE
+                    );
+
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(
+                            null,
+                            ex.getMessage(),
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE
+                    );
+                }
+            }
         });
+
 
         // TÌM
         btnTimPH.addActionListener(e -> {
-            modelPH.setRowCount(0);
-            for (PhuHuynhDTO ph : phuHuynhBLL.timKiemPhuHuynh(txtTimPH.getText())) {
-                modelPH.addRow(new Object[]{
+            try {
+                String keyword = txtTimPH.getText().trim();
+
+                if (keyword.isEmpty()) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Vui lòng nhập từ khóa tìm kiếm!",
+                        "Thiếu dữ liệu",
+                        JOptionPane.WARNING_MESSAGE
+                    );
+                    return;
+                }
+
+                modelPH.setRowCount(0);
+
+                for (PhuHuynhDTO ph : phuHuynhBLL.timKiemPhuHuynh(keyword)) {
+                    modelPH.addRow(new Object[]{
                         ph.getIDPHUHUYNH(),
                         ph.getTENPHUHUYNH(),
                         ph.getSDT(),
                         ph.getEMAIL(),
                         ph.getDIACHI(),
                         ph.getHOTENHOCSINH()
-                });
+                    });
+                }
+
+                // Không tìm thấy
+                if (modelPH.getRowCount() == 0) {
+                    JOptionPane.showMessageDialog(
+                        this,
+                        "Không tìm thấy phụ huynh phù hợp!",
+                        "Kết quả tìm kiếm",
+                        JOptionPane.INFORMATION_MESSAGE
+                    );
+                }
+
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    ex.getMessage(),
+                    "Lỗi nhập liệu",
+                    JOptionPane.WARNING_MESSAGE
+                );
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(
+                    this,
+                    "Có lỗi xảy ra khi tìm phụ huynh!",
+                    "Lỗi hệ thống",
+                    JOptionPane.ERROR_MESSAGE
+                );
+                ex.printStackTrace();
             }
         });
 
@@ -1267,6 +2039,7 @@ public class MainForm extends JFrame {
         // ================= TAB DANH SÁCH =================
         
         table_3 = new JTable();
+        table_3.setModel(modelDD);
         table_3.setBounds(10, 21, 712, 288);
         panel_5_4.add(table_3);
         pDanhsach = new JPanel();
@@ -1284,6 +2057,8 @@ public class MainForm extends JFrame {
         pDiemdanh.setBackground(new Color(255, 255, 255));
         tabbedPane_1.addTab("Điểm danh", null, pDiemdanh, null);
         pDiemdanh.setLayout(null);
+     
+
         
         JPanel panel_2_1_1 = new JPanel();
         panel_2_1_1.setLayout(null);
@@ -1319,6 +2094,7 @@ public class MainForm extends JFrame {
         lblNgaySinh_1_1_1_1.setBounds(20, 119, 102, 15);
         panel_2_1_1.add(lblNgaySinh_1_1_1_1);
         
+        
         txtNgayDD = new JTextField();
         txtNgayDD.setBounds(110, 116, 217, 20);
         panel_2_1_1.add(txtNgayDD);
@@ -1335,17 +2111,25 @@ public class MainForm extends JFrame {
         txtLydoDD.setBounds(443, 57, 217, 20);
         panel_2_1_1.add(txtLydoDD);
         
-        JComboBox cbChonGVDD = new JComboBox();
+        cbChonGVDD = new JComboBox<>();
         cbChonGVDD.setBounds(443, 86, 113, 22);
         panel_2_1_1.add(cbChonGVDD);
         
-        JComboBox cbChonHSDD = new JComboBox();
+        cbChonHSDD = new JComboBox<>();
         cbChonHSDD.setBounds(110, 58, 113, 22);
         panel_2_1_1.add(cbChonHSDD);
         
-        JComboBox cbChonlophsDD = new JComboBox();
+        cbChonlophsDD = new JComboBox<>();
         cbChonlophsDD.setBounds(110, 86, 113, 22);
         panel_2_1_1.add(cbChonlophsDD);
+        
+        cbChonlophsDD.addActionListener(e -> {
+            LopHocDTO lop = (LopHocDTO) cbChonlophsDD.getSelectedItem();
+            if (lop != null) {
+                loadComboBoxHocSinhDiemDanh(lop.getIDLOP());
+            }
+        });
+
         
         JPanel panel_1_2_1_1 = new JPanel();
         panel_1_2_1_1.setLayout(null);
@@ -1364,6 +2148,7 @@ public class MainForm extends JFrame {
         btnTimDD.setBounds(140, 10, 90, 22);
         panel_1_2_1_1.add(btnTimDD);
         
+        
         JButton btnHienthitatcaDD = new JButton("Hiển thị tất cả");
         btnHienthitatcaDD.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
@@ -1372,6 +2157,9 @@ public class MainForm extends JFrame {
         btnHienthitatcaDD.setBounds(240, 10, 120, 22);
         panel_1_2_1_1.add(btnHienthitatcaDD);
         
+        btnHienthitatcaDD.addActionListener(e -> {
+            loadDanhSachDiemDanh();
+        });
         JButton btnThemDD = new JButton("Thêm");
         btnThemDD.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
@@ -1379,6 +2167,8 @@ public class MainForm extends JFrame {
         });
         btnThemDD.setBounds(370, 10, 70, 22);
         panel_1_2_1_1.add(btnThemDD);
+        
+
         
         JButton btnSuaDD = new JButton("Sửa");
         btnSuaDD.addActionListener(new ActionListener() {
@@ -1388,6 +2178,7 @@ public class MainForm extends JFrame {
         btnSuaDD.setBounds(450, 10, 70, 22);
         panel_1_2_1_1.add(btnSuaDD);
         
+        
         JButton btnXoaDD = new JButton("Xóa");
         btnXoaDD.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
@@ -1395,6 +2186,7 @@ public class MainForm extends JFrame {
         });
         btnXoaDD.setBounds(530, 10, 70, 22);
         panel_1_2_1_1.add(btnXoaDD);
+        
         
         JButton btnLammoiDD = new JButton("Làm mới");
         btnLammoiDD.addActionListener(new ActionListener() {
@@ -1404,17 +2196,161 @@ public class MainForm extends JFrame {
         btnLammoiDD.setBounds(610, 10, 98, 22);
         panel_1_2_1_1.add(btnLammoiDD);
         
+        
         JPanel panel_5_5 = new JPanel();
         panel_5_5.setLayout(null);
         panel_5_5.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách điểm danh"));
         panel_5_5.setBounds(37, 214, 707, 320);
         pDiemdanh.add(panel_5_5);
         
-        // ================= TAB DANH SÁCH LỊCH DẠY =================
+        String[] colDD = {
+        	    "Mã điểm danh",
+        	    "Học sinh",
+        	    "Lớp",
+        	    "Ngày điểm danh",
+        	    "Trạng thái",
+        	    "Lý do",
+        	    "Giáo viên"
+        	};
+
+        	modelDD = new DefaultTableModel(colDD, 0);
+        	tableDD = new JTable(modelDD);
+        	tableDD.setModel(modelDD);
+        	tableDD.setRowHeight(22);
+        	tableDD.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+
+
+        JScrollPane scrollDD = new JScrollPane(tableDD);
+        scrollDD.setBounds(10, 20, 685, 285);
+        panel_5_5.add(scrollDD);
         
-        table_4 = new JTable();
-        table_4.setBounds(10, 21, 677, 288);
-        panel_5_5.add(table_4);
+        btnTimDD.addActionListener(e -> {
+            modelDD.setRowCount(0);
+            for (DiemDanhDTO d : diemDanhBLL.timKiemDiemDanh(txtTimDD.getText())) {
+                modelDD.addRow(new Object[]{
+                    d.getIdDiemDanh(),
+                    d.getHoTenHocSinh(),
+                    d.getTenLop(),
+                    d.getNgayDiemDanh(),
+                    d.getTrangThai(),
+                    d.getLyDo(),
+                    d.getHoTenGiaoVien()
+                });
+            }
+        });
+        
+        btnThemDD.addActionListener(e -> {
+            try {
+                HocSinhDTO hs = (HocSinhDTO) cbChonHSDD.getSelectedItem();
+                LopHocDTO lop = (LopHocDTO) cbChonlophsDD.getSelectedItem();
+                GiaoVienDTO gv = (GiaoVienDTO) cbChonGVDD.getSelectedItem();
+
+                if (hs == null || lop == null || gv == null) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ học sinh, lớp và giáo viên!");
+                    return;
+                }
+
+                diemDanhBLL.themDiemDanh(
+                    txtMaDD.getText(),
+                    hs.getIDHOCSINH(),
+                    lop.getIDLOP(),
+                    txtNgayDD.getText(),
+                    txtTrangthaiDD.getText(),
+                    txtLydoDD.getText(),
+                    gv.getIdGiaoVien()
+                );
+                loadDanhSachDiemDanh();
+                JOptionPane.showMessageDialog(this, "Thêm điểm danh thành công!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
+        
+        btnSuaDD.addActionListener(e -> {
+            if (txtMaDD.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn điểm danh cần sửa!");
+                return;
+            }
+
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc muốn sửa điểm danh này?",
+                "Xác nhận",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm != JOptionPane.YES_OPTION) return;
+
+            try {
+                HocSinhDTO hs = (HocSinhDTO) cbChonHSDD.getSelectedItem();
+                LopHocDTO lop = (LopHocDTO) cbChonlophsDD.getSelectedItem();
+                GiaoVienDTO gv = (GiaoVienDTO) cbChonGVDD.getSelectedItem();
+
+                if (hs == null || lop == null || gv == null) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng chọn đầy đủ học sinh, lớp và giáo viên!");
+                    return;
+                }
+
+                diemDanhBLL.suaDiemDanh(
+                    txtMaDD.getText(),
+                    hs.getIDHOCSINH(),
+                    lop.getIDLOP(),
+                    txtNgayDD.getText(),
+                    txtTrangthaiDD.getText(),
+                    txtLydoDD.getText(),
+                    gv.getIdGiaoVien()
+                );
+
+                loadDanhSachDiemDanh();
+                JOptionPane.showMessageDialog(this, "Cập nhật điểm danh thành công!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
+
+        
+        btnXoaDD.addActionListener(e -> {
+            int row = tableDD.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
+                return;
+            }
+
+            String idDD = modelDD.getValueAt(row, 0).toString();
+
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc muốn xóa điểm danh này?",
+                "Xác nhận",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                try {
+                    diemDanhBLL.xoaDiemDanh(idDD);
+                    loadDanhSachDiemDanh();
+                    JOptionPane.showMessageDialog(this, "Xóa thành công!");
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, ex.getMessage());
+                }
+            }
+        });
+
+        
+        btnLammoiDD.addActionListener(e -> {
+            txtMaDD.setText("");
+            txtNgayDD.setText("");
+            txtTrangthaiDD.setText("");
+            txtLydoDD.setText("");
+            txtTimDD.setText("");
+            tableDD.clearSelection();
+        });
+
+        
+        
+        // ================= TAB DANH SÁCH LỊCH DẠY =================
+
         
         JPanel pLichday = new JPanel();
         pLichday.setBackground(new Color(255, 255, 255));
@@ -1467,7 +2403,7 @@ public class MainForm extends JFrame {
         txtGioketthucLD.setBounds(443, 57, 217, 20);
         panel_2_1_1_1.add(txtGioketthucLD);
         
-        JComboBox cbChonGVLD = new JComboBox();
+        cbChonGVLD = new JComboBox<>();
         cbChonGVLD.setBounds(443, 86, 113, 22);
         panel_2_1_1_1.add(cbChonGVLD);
         
@@ -1479,7 +2415,7 @@ public class MainForm extends JFrame {
         lblMaGV_1_1_1_1_1_1.setBounds(353, 116, 80, 15);
         panel_2_1_1_1.add(lblMaGV_1_1_1_1_1_1);
         
-        JComboBox cbChonLopLD = new JComboBox();
+        cbChonLopLD = new JComboBox<>();
         cbChonLopLD.setBounds(443, 112, 113, 22);
         panel_2_1_1_1.add(cbChonLopLD);
         
@@ -1545,6 +2481,262 @@ public class MainForm extends JFrame {
         panel_5_6.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách lịch dạy"));
         panel_5_6.setBounds(30, 223, 707, 320);
         pLichday.add(panel_5_6);
+        String[] colLD = {
+        	    "Mã lịch",
+        	    "Ngày dạy",
+        	    "Giờ bắt đầu",
+        	    "Giờ kết thúc",
+        	    "Nội dung",
+        	    "Giáo viên",
+        	    "Lớp"
+        	};
+
+        	modelLD = new DefaultTableModel(colLD, 0);
+        	tableLD = new JTable(modelLD);
+        	tableLD.setModel(modelLD);
+        	tableLD.setRowHeight(22);
+        	tableLD.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        	JScrollPane scrollLD = new JScrollPane(tableLD);
+        	scrollLD.setBounds(10, 20, 685, 285);
+        	panel_5_6.add(scrollLD);
+        	tableLD.addMouseListener(new MouseAdapter() {
+        	    @Override
+        	    public void mouseClicked(MouseEvent e) {
+        	        int row = tableLD.getSelectedRow();
+        	        if (row != -1) {
+        	            txtMaLD.setText(modelLD.getValueAt(row, 0).toString());
+        	            txtNgayday.setText(modelLD.getValueAt(row, 1).toString());
+        	            txtGiobatdauLD.setText(modelLD.getValueAt(row, 2).toString());
+        	            txtGioketthucLD.setText(modelLD.getValueAt(row, 3).toString());
+        	            txtNoidungday.setText(modelLD.getValueAt(row, 4).toString());
+        	        }
+        	    }
+        	});
+
+        	
+        	btnTimLD.addActionListener(e -> {
+        	    modelLD.setRowCount(0);
+        	    for (LichDayDTO ld : lichDayBLL.timKiemLichDay(txtTimLD.getText())) {
+        	        modelLD.addRow(new Object[]{
+        	            ld.getIDLICH(),
+        	            ld.getNGAYDAY(),
+        	            ld.getGIOBATDAU(),
+        	            ld.getGIOKETTHUC(),
+        	            ld.getNOIDUNG(),
+        	            ld.getHOTENGIAOVIEN(),
+        	            ld.getTENLOP()
+        	        });
+        	    }
+        	});
+
+        	btnHienthitatcaLD.addActionListener(e -> {
+        	    loadDanhSachLichDay();
+        	});
+
+        	btnThemLD.addActionListener(e -> {
+
+        	    // ===== 1. KIỂM TRA DỮ LIỆU NHẬP =====
+        	    if (txtMaLD.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập mã lịch dạy!");
+        	        txtMaLD.requestFocus();
+        	        return;
+        	    }
+
+        	    if (txtNgayday.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập ngày dạy!");
+        	        txtNgayday.requestFocus();
+        	        return;
+        	    }
+
+        	    if (txtGiobatdauLD.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập giờ bắt đầu!");
+        	        txtGiobatdauLD.requestFocus();
+        	        return;
+        	    }
+
+        	    if (txtGioketthucLD.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập giờ kết thúc!");
+        	        txtGioketthucLD.requestFocus();
+        	        return;
+        	    }
+
+        	    if (txtNoidungday.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập nội dung dạy!");
+        	        txtNoidungday.requestFocus();
+        	        return;
+        	    }
+
+        	    // ===== 2. KIỂM TRA COMBOBOX =====
+        	    GiaoVienDTO gv = (GiaoVienDTO) cbChonGVLD.getSelectedItem();
+        	    LopHocDTO lop = (LopHocDTO) cbChonLopLD.getSelectedItem();
+
+        	    if (gv == null) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn giáo viên!");
+        	        cbChonGVLD.requestFocus();
+        	        return;
+        	    }
+
+        	    if (lop == null) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn lớp!");
+        	        cbChonLopLD.requestFocus();
+        	        return;
+        	    }
+
+        	 // ===== 3. KIỂM TRA GIỜ HỢP LỆ =====
+        	    try {
+
+        	        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("H:mm");
+
+        	        LocalTime gioBatDau = LocalTime.parse(
+        	                txtGiobatdauLD.getText().trim(), formatter);
+
+        	        LocalTime gioKetThuc = LocalTime.parse(
+        	                txtGioketthucLD.getText().trim(), formatter);
+
+        	        if (!gioKetThuc.isAfter(gioBatDau)) {
+        	            JOptionPane.showMessageDialog(
+        	                    this,
+        	                    "Giờ kết thúc phải sau giờ bắt đầu!",
+        	                    "Dữ liệu không hợp lệ",
+        	                    JOptionPane.WARNING_MESSAGE
+        	            );
+        	            txtGioketthucLD.requestFocus();
+        	            return;
+        	        }
+
+        	    } catch (Exception ex) {
+        	        JOptionPane.showMessageDialog(
+        	                this,
+        	                "Giờ phải đúng định dạng HH:mm (vd: 07:30 hoặc 7:30)",
+        	                "Sai định dạng",
+        	                JOptionPane.WARNING_MESSAGE
+        	        );
+        	        txtGiobatdauLD.requestFocus();
+        	        return;
+        	    }
+        	 // ===== 3.5. KIỂM TRA & CHUYỂN ĐỔI NGÀY =====
+        	    String ngaySQL = "";
+
+        	    try {
+        	        LocalDate localDate = LocalDate.parse(
+        	                txtNgayday.getText().trim(),
+        	                DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        	        );
+
+        	        ngaySQL = localDate.format(
+        	                DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        	        );
+
+        	    } catch (Exception ex) {
+        	        JOptionPane.showMessageDialog(
+        	                this,
+        	                "Ngày phải đúng định dạng dd/MM/yyyy (vd: 20/03/2026)",
+        	                "Sai định dạng ngày",
+        	                JOptionPane.WARNING_MESSAGE
+        	        );
+        	        txtNgayday.requestFocus();
+        	        return;
+        	    }
+
+        	    // ===== 4. THÊM LỊCH DẠY =====
+        	    try {
+        	    	System.out.println("Ngày gửi xuống DB: " + ngaySQL);
+        	        lichDayBLL.themLichDay(
+        	            txtMaLD.getText().trim(),
+        	            ngaySQL,
+        	            txtGiobatdauLD.getText().trim(),
+        	            txtGioketthucLD.getText().trim(),
+        	            txtNoidungday.getText().trim(),
+        	            gv.getIdGiaoVien(),
+        	            lop.getIDLOP()
+        	        );
+
+        	        // ===== 5. LÀM MỚI FORM =====
+        	        txtMaLD.setText("");
+        	        txtNgayday.setText("");
+        	        txtGiobatdauLD.setText("");
+        	        txtGioketthucLD.setText("");
+        	        txtNoidungday.setText("");
+        	        tableLD.clearSelection();
+
+        	        JOptionPane.showMessageDialog(
+        	            this,
+        	            "Thêm lịch dạy thành công!",
+        	            "Thành công",
+        	            JOptionPane.INFORMATION_MESSAGE
+        	        );
+        	        loadDanhSachLichDay();
+
+        	    } catch (Exception ex) {
+        	        JOptionPane.showMessageDialog(
+        	            this,
+        	            ex.getMessage(),
+        	            "Lỗi",
+        	            JOptionPane.ERROR_MESSAGE
+        	        );
+        	    }
+        	});
+
+
+        	btnSuaLD.addActionListener(e -> {
+        	    if (txtMaLD.getText().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn lịch cần sửa!");
+        	        return;
+        	    }
+
+        	    try {
+        	        GiaoVienDTO gv = (GiaoVienDTO) cbChonGVLD.getSelectedItem();
+        	        LopHocDTO lop = (LopHocDTO) cbChonLopLD.getSelectedItem();
+
+        	        lichDayBLL.suaLichDay(
+        	            txtMaLD.getText(),
+        	            txtNgayday.getText(),
+        	            txtGiobatdauLD.getText(),
+        	            txtGioketthucLD.getText(),
+        	            txtNoidungday.getText(),
+        	            gv.getIdGiaoVien(),
+        	            lop.getIDLOP()
+        	        );
+
+        	        loadDanhSachLichDay();
+        	        JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+        	    } catch (Exception ex) {
+        	        JOptionPane.showMessageDialog(this, ex.getMessage());
+        	    }
+        	});
+
+        	btnXoaLD.addActionListener(e -> {
+        	    int row = tableLD.getSelectedRow();
+        	    if (row == -1) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa!");
+        	        return;
+        	    }
+
+        	    String idLich = modelLD.getValueAt(row, 0).toString();
+
+        	    if (JOptionPane.showConfirmDialog(
+        	            this,
+        	            "Bạn có chắc muốn xóa lịch dạy này?",
+        	            "Xác nhận",
+        	            JOptionPane.YES_NO_OPTION
+        	    ) == JOptionPane.YES_OPTION) {
+        	        lichDayBLL.xoaLichDay(idLich);
+        	        loadDanhSachLichDay();
+        	    }
+        	});
+
+        	btnLammoiLD.addActionListener(e -> {
+        	    txtMaLD.setText("");
+        	    txtNgayday.setText("");
+        	    txtGiobatdauLD.setText("");
+        	    txtGioketthucLD.setText("");
+        	    txtNoidungday.setText("");
+        	    txtTimLD.setText("");
+        	    tableLD.clearSelection();
+        	});
+
+
         
         // ================= TAB DANH SÁCH BÁO CÁO SỨC KHỎE =================
         
@@ -1603,7 +2795,7 @@ public class MainForm extends JFrame {
         txtChieucao.setBounds(443, 25, 113, 20);
         panel_2_1_1_1_1.add(txtChieucao);
         
-        JComboBox cbChonlopSK = new JComboBox();
+        cbChonlopSK = new JComboBox<>();
         cbChonlopSK.setBounds(443, 86, 113, 22);
         panel_2_1_1_1_1.add(cbChonlopSK);
         
@@ -1615,7 +2807,7 @@ public class MainForm extends JFrame {
         lblMaGV_1_1_1_1_1_1_1.setBounds(353, 116, 80, 15);
         panel_2_1_1_1_1.add(lblMaGV_1_1_1_1_1_1_1);
         
-        JComboBox cbChongvSK = new JComboBox();
+        cbChongvSK = new JComboBox<>();
         cbChongvSK.setBounds(443, 112, 113, 22);
         panel_2_1_1_1_1.add(cbChongvSK);
         
@@ -1623,7 +2815,7 @@ public class MainForm extends JFrame {
         lblMaGV_1_1_1_1_1_2_1.setBounds(353, 57, 80, 15);
         panel_2_1_1_1_1.add(lblMaGV_1_1_1_1_1_2_1);
         
-        JComboBox cbChonHSSK = new JComboBox();
+        cbChonHSSK = new JComboBox<>();
         cbChonHSSK.setBounds(443, 53, 113, 22);
         panel_2_1_1_1_1.add(cbChonHSSK);
         
@@ -1684,17 +2876,208 @@ public class MainForm extends JFrame {
         btnLammoiBCSK.setBounds(610, 10, 96, 22);
         panel_1_2_1_1_1_1.add(btnLammoiBCSK);
         
-        JPanel panel_5_7 = new JPanel();
-        panel_5_7.setLayout(null);
-        panel_5_7.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách báo cáo sức khỏe"));
-        panel_5_7.setBounds(39, 223, 707, 320);
-        pSuckhoe.add(panel_5_7);
+        JPanel panelDanhSachBCSK = new JPanel();
+        panelDanhSachBCSK.setLayout(null);
+        panelDanhSachBCSK.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách báo cáo sức khỏe"));
+        panelDanhSachBCSK.setBounds(39, 223, 707, 320);
+        pSuckhoe.add(panelDanhSachBCSK);
+        String[] colBCSK = {
+        	    "Mã báo cáo", "Ngày khám", "Cân nặng", "Chiều cao",
+        	    "Tình trạng", "Học sinh", "Lớp", "Giáo viên"
+        	};
+
+        	modelBCSK = new DefaultTableModel(colBCSK, 0);
+
+        	tableBCSK = new JTable(modelBCSK);
+        	tableBCSK.setRowHeight(22);
+        	tableBCSK.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        	JScrollPane scrollBCSK = new JScrollPane(tableBCSK);
+        	scrollBCSK.setBounds(10, 20, 680, 280);
+        	panelDanhSachBCSK.add(scrollBCSK);
+
+
+
+
+        	loadDanhSachBaoCaoSucKhoe();
+
+        	tableBCSK.addMouseListener(new MouseAdapter() {
+        	    @Override
+        	    public void mouseClicked(MouseEvent e) {
+        	        int row = tableBCSK.getSelectedRow();
+        	        if (row != -1) {
+        	            txtBaocaosuckhoe.setText(modelBCSK.getValueAt(row, 0).toString());
+        	            txtNgaykham.setText(modelBCSK.getValueAt(row, 1).toString());
+        	            txtCannang.setText(modelBCSK.getValueAt(row, 2).toString());
+        	            txtChieucao.setText(modelBCSK.getValueAt(row, 3).toString());
+        	            txtTinhtrang.setText(modelBCSK.getValueAt(row, 4).toString());
+        	        }
+        	    }
+        	});
+
+        	btnThemBCSK.addActionListener(e -> {
+        	    if (txtBaocaosuckhoe.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập mã báo cáo!");
+        	        txtBaocaosuckhoe.requestFocus();
+        	        return;
+        	    }
+        	    if (txtNgaykham.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập ngày khám!");
+        	        txtNgaykham.requestFocus();
+        	        return;
+        	    }
+        	    if (txtCannang.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập cân nặng!");
+        	        txtCannang.requestFocus();
+        	        return;
+        	    }
+        	    if (txtChieucao.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập chiều cao!");
+        	        txtChieucao.requestFocus();
+        	        return;
+        	    }
+        	    if (txtTinhtrang.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Chưa nhập tình trạng!");
+        	        txtTinhtrang.requestFocus();
+        	        return;
+        	    }
+
+        	    HocSinhDTO hs = (HocSinhDTO) cbChonHSSK.getSelectedItem();
+        	    LopHocDTO lop = (LopHocDTO) cbChonlopSK.getSelectedItem();
+        	    GiaoVienDTO gv = (GiaoVienDTO) cbChongvSK.getSelectedItem();
+
+        	    if (hs == null || lop == null || gv == null) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn học sinh, lớp và giáo viên!");
+        	        return;
+        	    }
+
+        	    try {
+        	    	SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        	    	sdf.setLenient(false); 
+
+        	        Date ngayKham = sdf.parse(txtNgaykham.getText().trim());
+
+        	        BaoCaoSucKhoeDTO bc = new BaoCaoSucKhoeDTO(
+        	        	txtBaocaosuckhoe.getText().trim(),
+        	            ngayKham,
+        	            txtCannang.getText().trim(),
+        	            txtChieucao.getText().trim(),
+        	            txtTinhtrang.getText().trim(),
+        	            hs.getIDHOCSINH(),
+        	            lop.getIDLOP(),
+        	            gv.getIdGiaoVien()
+
+        	        );
+
+        	        bcskBLL.themBaoCaoSucKhoe(bc);
+        	        loadDanhSachBaoCaoSucKhoe();
+
+        	        JOptionPane.showMessageDialog(this, "Thêm báo cáo sức khỏe thành công!");
+
+        	    } catch (Exception ex) {
+        	        JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        	    }
+        	});
+        	
+        	btnSuaBCSK.addActionListener(e -> {
+
+        	    int row = tableBCSK.getSelectedRow();
+        	    if (row == -1) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn báo cáo cần sửa!");
+        	        return;
+        	    }
+
+        	    if (txtBaocaosuckhoe.getText().trim().isEmpty()) {
+        	        JOptionPane.showMessageDialog(this, "Mã báo cáo không được để trống!");
+        	        return;
+        	    }
+
+        	    HocSinhDTO hs = (HocSinhDTO) cbChonHSSK.getSelectedItem();
+        	    LopHocDTO lop = (LopHocDTO) cbChonlopSK.getSelectedItem();
+        	    GiaoVienDTO gv = (GiaoVienDTO) cbChongvSK.getSelectedItem();
+
+        	    if (hs == null || lop == null || gv == null) {
+        	        JOptionPane.showMessageDialog(this, "Vui lòng chọn học sinh, lớp và giáo viên!");
+        	        return;
+        	    }
+
+        	    try {
+        	    	SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        	    	sdf.setLenient(false);
+        	    	Date ngayKham = sdf.parse(txtNgaykham.getText().trim());
+
+
+        	        BaoCaoSucKhoeDTO bc = new BaoCaoSucKhoeDTO(
+        	        	txtBaocaosuckhoe.getText().trim(),
+        	            ngayKham,
+        	            txtCannang.getText().trim(),
+        	            txtChieucao.getText().trim(),
+        	            txtTinhtrang.getText().trim(),
+        	            hs.getIDHOCSINH(),
+        	            lop.getIDLOP(),
+        	            gv.getIdGiaoVien()
+        	        );
+
+        	        bcskBLL.suaBaoCaoSucKhoe(bc);
+        	        loadDanhSachBaoCaoSucKhoe();
+
+        	        JOptionPane.showMessageDialog(this, "Cập nhật báo cáo sức khỏe thành công!");
+
+        	    } catch (Exception ex) {
+        	        JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+        	    }
+        	});
+
+        	
+        	btnXoaBCSK.addActionListener(e -> {
+        	    int row = tableBCSK.getSelectedRow();
+        	    if (row == -1) {
+        	        JOptionPane.showMessageDialog(this, "Chưa chọn báo cáo!");
+        	        return;
+        	    }
+
+        	    String id = modelBCSK.getValueAt(row, 0).toString();
+        	    if (JOptionPane.showConfirmDialog(this,
+        	            "Xóa báo cáo này?",
+        	            "Xác nhận",
+        	            JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+
+        	        bcskBLL.xoaBaoCaoSucKhoe(id);
+        	        loadDanhSachBaoCaoSucKhoe();
+        	    }
+        	});
+
+        	btnTimBCSK.addActionListener(e -> {
+        	    modelBCSK.setRowCount(0);
+        	    for (BaoCaoSucKhoeDTO bc : bcskBLL.timKiemBaoCaoSucKhoe(txtTimBCSK.getText().trim())) {
+        	        modelBCSK.addRow(new Object[]{
+        	            bc.getIDBAOCAO(),
+        	            bc.getNGAYKHAM(),
+        	            bc.getCANNANG(),
+        	            bc.getCHIEUCAO(),
+        	            bc.getTINHTRANG(),
+        	            bc.getHOTENHOCSINH(),
+        	            bc.getTENLOP(),
+        	            bc.getHOTENGIAOVIEN()
+        	        });
+        	    }
+        	});
+
+        	btnLammoiBCSK.addActionListener(e -> {
+        		txtBaocaosuckhoe.setText("");
+        	    txtNgaykham.setText("");
+        	    txtCannang.setText("");
+        	    txtChieucao.setText("");
+        	    txtTinhtrang.setText("");
+        	    txtTimBCSK.setText("");
+
+        	    table_6.clearSelection();
+        	    loadDanhSachBaoCaoSucKhoe();
+        	});
+
+
         
         // ================= TAB DANH SÁCH NGƯỜI GIÁM HỘ =================
-        
-        table_6 = new JTable();
-        table_6.setBounds(10, 21, 677, 288);
-        panel_5_7.add(table_6);
         
         JPanel pChitietNGH = new JPanel();
         pChitietNGH.setBackground(new Color(255, 255, 255));
@@ -1719,11 +3102,11 @@ public class MainForm extends JFrame {
         lblNgiGimH.setBounds(209, 95, 80, 15);
         panel_3_2.add(lblNgiGimH);
         
-        JComboBox cbChonhsGH = new JComboBox();
+        cbChonhsGH = new JComboBox<>();
         cbChonhsGH.setBounds(299, 31, 109, 22);
         panel_3_2.add(cbChonhsGH);
         
-        JComboBox cbChonphGHhs = new JComboBox();
+        cbChonphGHhs = new JComboBox<>();
         cbChonphGHhs.setBounds(299, 61, 109, 22);
         panel_3_2.add(cbChonphGHhs);
         
@@ -1794,10 +3177,137 @@ public class MainForm extends JFrame {
         panel_5_8.setBorder(BorderFactory.createTitledBorder( BorderFactory.createLineBorder(Color.GRAY),"Danh sách người giám hộ"));
         panel_5_8.setBounds(48, 225, 707, 320);
         pChitietNGH.add(panel_5_8);
+        String[] colNGH = {
+        	    "ID HS",
+        	    "Tên học sinh",
+        	    "ID PH",
+        	    "Tên phụ huynh",
+        	    "Người giám hộ"
+        	};
+
+        	modelNGH = new DefaultTableModel(colNGH, 0);
+        	tableNGH = new JTable(modelNGH);
+        	tableNGH.setRowHeight(22);
+        	tableNGH.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        	JScrollPane scrollNGH = new JScrollPane(tableNGH);
+        	scrollNGH.setBounds(10, 21, 677, 288);
+        	panel_5_8.add(scrollNGH);
+        	tableNGH.addMouseListener(new MouseAdapter() {
+        	    @Override
+        	    public void mouseClicked(MouseEvent e) {
+        	        int row = tableNGH.getSelectedRow();
+        	        if (row != -1) {
+        	            txtNguoigiamho.setText(
+        	                modelNGH.getValueAt(row, 4).toString()
+        	            );
+        	        }
+        	    }
+        	});
+
         
         table_7 = new JTable();
         table_7.setBounds(10, 21, 677, 288);
         panel_5_8.add(table_7);
+        
+        btnThemNGH.addActionListener(e -> {
+
+            HocSinhDTO hs = (HocSinhDTO) cbChonhsGH.getSelectedItem();
+            PhuHuynhDTO ph = (PhuHuynhDTO) cbChonphGHhs.getSelectedItem();
+
+            if (hs == null || ph == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn học sinh và phụ huynh!");
+                return;
+            }
+
+            if (txtNguoigiamho.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Chưa nhập người giám hộ!");
+                return;
+            }
+
+            try {
+                chitietNGHBLL.themChitietNGH(
+                    hs.getIDHOCSINH(),
+                    ph.getIDPHUHUYNH(),
+                    txtNguoigiamho.getText().trim()
+                );
+
+                JOptionPane.showMessageDialog(this, "Thêm thành công!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+                loadDanhSachNguoiGiamHo();
+            }
+        });
+
+        btnSuaNGH.addActionListener(e -> {
+            int row = tableNGH.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Chọn dòng cần sửa!");
+                return;
+            }
+
+            String idHS = modelNGH.getValueAt(row, 0).toString();
+            String idPH = modelNGH.getValueAt(row, 2).toString();
+
+            try {
+                chitietNGHBLL.suaChitietNGH(
+                    idHS,
+                    idPH,
+                    txtNguoigiamho.getText().trim()
+                );
+
+                loadDanhSachNguoiGiamHo();
+                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this, ex.getMessage());
+            }
+        });
+
+        btnXoaNGH.addActionListener(e -> {
+            int row = tableNGH.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Chọn dòng cần xóa!");
+                return;
+            }
+
+            String idHS = modelNGH.getValueAt(row, 0).toString();
+            String idPH = modelNGH.getValueAt(row, 2).toString();
+
+            if (JOptionPane.showConfirmDialog(
+                this,
+                "Xóa người giám hộ này?",
+                "Xác nhận",
+                JOptionPane.YES_NO_OPTION
+            ) == JOptionPane.YES_OPTION) {
+
+                chitietNGHBLL.xoaChitietNGH(idHS, idPH);
+                loadDanhSachNguoiGiamHo();
+            }
+        });
+
+        btnTimNGH.addActionListener(e -> {
+            modelNGH.setRowCount(0);
+
+            for (ChitietNGHDTO ngh :
+                 chitietNGHBLL.timKiemChitietNGH(txtTimNGH.getText().trim())) {
+
+                modelNGH.addRow(new Object[]{
+                    ngh.getIDHOCSINH(),
+                    ngh.getHOTENHOCSINH(),
+                    ngh.getIDPHUHUYNH(),
+                    ngh.getTENPHUHUYNH(),
+                    ngh.getNGUOIGIAMHO()
+                });
+            }
+        });
+
+        btnLammoiNGH.addActionListener(e -> {
+            txtNguoigiamho.setText("");
+            txtTimNGH.setText("");
+            tableNGH.clearSelection();
+            loadDanhSachNguoiGiamHo();
+        });
+
         
         // ================= LABEL =================
         
@@ -1824,7 +3334,7 @@ public class MainForm extends JFrame {
             java.text.SimpleDateFormat f2 = new java.text.SimpleDateFormat("yyyy-MM-dd");
             return f2.format(f1.parse(ngayNhap));
         } catch (Exception e) {
-            return ngayNhap; // nếu sai thì giữ nguyên
+            return ngayNhap;
         }
     }
     private void loadTableGV() {
@@ -1841,5 +3351,187 @@ public class MainForm extends JFrame {
             });
         }
     }
-   
+    
+    private void loadDanhSachDiemDanh() {
+        modelDD.setRowCount(0);
+
+        for (DiemDanhDTO d : diemDanhBLL.loadDiemDanhList()) {
+            modelDD.addRow(new Object[]{
+                d.getIdDiemDanh(),
+                d.getHoTenHocSinh(),
+                d.getTenLop(),
+                d.getNgayDiemDanh(),
+                d.getTrangThai(),
+                d.getLyDo(),
+                d.getHoTenGiaoVien()
+            });
+        }
+    }
+    private void loadComboBoxLopDiemDanh() {
+        cbChonlophsDD.removeAllItems();
+
+        for (LopHocDTO lop : lopHocBLL.getAll()) {
+            cbChonlophsDD.addItem(lop);
+        }
+    }
+    private void loadComboBoxHocSinhDiemDanh(String idLop) {
+        cbChonHSDD.removeAllItems();
+
+        for (HocSinhDTO hs : hocSinhBLL.getHocSinhTheoLop(idLop)) {
+            cbChonHSDD.addItem(hs);
+        }
+    }
+    private void loadComboBoxGiaoVienDiemDanh() {
+        cbChonGVDD.removeAllItems();
+
+        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
+            cbChonGVDD.addItem(gv);
+        }
+    }
+    private void initTabDiemDanhEvent() {
+        tabbedPane.addChangeListener(e -> {
+            int index = tabbedPane.getSelectedIndex();
+            if (index == -1) return;
+
+            if ("Điểm danh".equals(tabbedPane.getTitleAt(index))) {
+                loadComboBoxLopDiemDanh();
+                loadComboBoxGiaoVienDiemDanh();
+                loadDanhSachDiemDanh();
+            }
+        });
+    }
+
+
+    private void initComboDiemDanhEvent() {
+    	cbChonlophsDD.addActionListener(e -> {
+            LopHocDTO lop = (LopHocDTO) cbChonlophsDD.getSelectedItem();
+            if (lop != null) {
+                loadComboBoxHocSinhDiemDanh(lop.getIDLOP());
+            }
+        });
+    }
+
+    private void loadDanhSachLichDay() {
+        if (modelLD == null) return; 
+
+        modelLD.setRowCount(0);
+        for (LichDayDTO ld : lichDayBLL.getLichDayList()) {
+            modelLD.addRow(new Object[]{
+                ld.getIDLICH(),
+                ld.getNGAYDAY(),
+                ld.getGIOBATDAU(),
+                ld.getGIOKETTHUC(),
+                ld.getNOIDUNG(),
+                ld.getHOTENGIAOVIEN(),
+                ld.getTENLOP()
+            });
+        }
+    }
+    private void loadDanhSachBaoCaoSucKhoe() {
+        modelBCSK.setRowCount(0); 
+
+        BaoCaoSucKhoeBLL bll = new BaoCaoSucKhoeBLL();
+        List<BaoCaoSucKhoeDTO> list = bll.getBaoCaoSucKhoeList();
+
+        for (BaoCaoSucKhoeDTO bc : list) {
+            modelBCSK.addRow(new Object[]{
+                bc.getIDBAOCAO(),
+                bc.getNGAYKHAM(),          
+                bc.getCANNANG(),
+                bc.getCHIEUCAO(),
+                bc.getTINHTRANG(),
+                bc.getHOTENHOCSINH(),
+                bc.getTENLOP(),
+                bc.getHOTENGIAOVIEN()
+            });
+        }
+    }
+    private void initBaoCaoSucKhoe() {
+    }
+    private void loadDanhSachNguoiGiamHo() {
+        modelNGH.setRowCount(0);
+
+        for (ChitietNGHDTO ct : chitietNGHBLL.getChitietNGHList()) {
+            modelNGH.addRow(new Object[] {
+                ct.getIDHOCSINH(),
+                ct.getHOTENHOCSINH(),
+                ct.getIDPHUHUYNH(),
+                ct.getTENPHUHUYNH(),
+                ct.getNGUOIGIAMHO()
+            });
+        }
+    }
+    private void initTableNguoiGiamHo() {
+
+        modelNGH = new DefaultTableModel(
+            new String[]{
+                "Mã NGH",
+                "Học sinh",
+                "Phụ huynh",
+                "Quan hệ"
+            }, 0
+        );
+
+        tableNGH = new JTable(modelNGH);
+
+        scrollingNGH = new JScrollPane(tableNGH);
+        scrollingNGH.setBounds(10, 21, 677, 288);
+
+    }
+    private void loadComboBoxLichDay() {
+    	System.out.println("Item count GV: " + cbChonGVLD.getItemCount());
+        // ===== Load Giáo viên =====
+        cbChonGVLD.removeAllItems();
+        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
+            cbChonGVLD.addItem(gv);
+        }
+
+        // ===== Load Lớp học =====
+        cbChonLopLD.removeAllItems();
+        for (LopHocDTO lop : lopHocBLL.getAll()) {
+            cbChonLopLD.addItem(lop);
+        }
+    }	
+    private void initLichDay() {
+        cbChonGVLD = new JComboBox<>();
+        cbChonLopLD = new JComboBox<>();
+    }
+    private void loadComboBoxBCSK() {
+
+        // ===== Load Lớp =====
+        cbChonlopSK.removeAllItems();
+        for (LopHocDTO lop : lopHocBLL.getAll()) {
+            cbChonlopSK.addItem(lop);
+        }
+
+        // ===== Load Giáo Viên =====
+        cbChongvSK.removeAllItems();
+        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
+            cbChongvSK.addItem(gv);
+        }
+
+        // ===== Load Học Sinh =====
+        cbChonHSSK.removeAllItems();
+        for (HocSinhDTO hs : hocSinhBLL.getAll()) {
+            cbChonHSSK.addItem(hs);
+        }
+    }
+    private void loadComboBoxNGH() {
+
+        DefaultComboBoxModel<HocSinhDTO> modelHS = new DefaultComboBoxModel<>();
+        for (HocSinhDTO hs : hocSinhBLL.getAll()) {
+            modelHS.addElement(hs);
+        }
+        cbChonhsGH.setModel(modelHS);
+
+
+        DefaultComboBoxModel<PhuHuynhDTO> modelPH = new DefaultComboBoxModel<>();
+        for (PhuHuynhDTO ph : phuHuynhBLL.getAll()) {
+            modelPH.addElement(ph);
+        }
+        cbChonphGHhs.setModel(modelPH);
+    }
+
+
+
 }

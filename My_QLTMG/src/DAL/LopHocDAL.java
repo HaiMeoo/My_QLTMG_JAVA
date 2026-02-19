@@ -1,6 +1,7 @@
 package DAL;
 
 import DTO.LopHocDTO;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -140,4 +141,47 @@ public class LopHocDAL {
 
         return list;
     }
+ // ========== KIỂM TRA TRÙNG MÃ LỚP ==========
+    public boolean kiemTraTrungMa(String maLop) {
+        String query = "SELECT COUNT(*) FROM LOPHOC WHERE IDLOP = ?";
+
+        try {
+            ResultSet rs = dataHelper.executeQuery(query, new Object[]{maLop});
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi kiểm tra trùng mã lớp: " + e.getMessage());
+        }
+        return false;
+    }
+ // ========== KIỂM TRA TRÙNG TÊN LỚP (THÊM) ==========
+    public boolean kiemTraTrungTen(String tenLop) {
+        String query = "SELECT COUNT(*) FROM LOPHOC WHERE TENLOP = ?";
+
+        try {
+            ResultSet rs = dataHelper.executeQuery(query, new Object[]{tenLop});
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi kiểm tra trùng tên lớp: " + e.getMessage());
+        }
+        return false;
+    }
+ // ========== KIỂM TRA TRÙNG TÊN LỚP (SỬA) ==========
+    public boolean kiemTraTrungTenKhiSua(String tenLop, String idLop) {
+        String query = "SELECT COUNT(*) FROM LOPHOC WHERE TENLOP = ? AND IDLOP <> ?";
+
+        try {
+            ResultSet rs = dataHelper.executeQuery(query, new Object[]{tenLop, idLop});
+            if (rs.next()) {
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi kiểm tra trùng tên lớp khi sửa: " + e.getMessage());
+        }
+        return false;
+    }
+
 }

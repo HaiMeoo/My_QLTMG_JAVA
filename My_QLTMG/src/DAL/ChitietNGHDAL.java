@@ -1,10 +1,12 @@
 package DAL;
 
 import DTO.ChitietNGHDTO;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+
 
 public class ChitietNGHDAL {
 
@@ -14,97 +16,108 @@ public class ChitietNGHDAL {
         dataHelper = DataHelper.getInstance();
     }
 
-    // ========== Load danh sách chi tiết người giám hộ ==========
+    // ========== Load danh sách ==========
     public List<ChitietNGHDTO> loadChitietNGHList() {
-        List<ChitietNGHDTO> list = new ArrayList<>();
+        List<ChitietNGHDTO> list = new ArrayList<ChitietNGHDTO>();
 
-        String query = "SELECT ct.IDHOCSINH, hs.HOTENHOCSINH, "
-                     + "ct.IDPHUHUYNH, ph.TENPHUHUYNH, "
-                     + "ct.NGUOIGIAMHO "
-                     + "FROM CHITIETNGUOIGIAMHO ct "
-                     + "JOIN HOCSINH hs ON ct.IDHOCSINH = hs.IDHOCSINH "
-                     + "JOIN PHUHUYNH ph ON ct.IDPHUHUYNH = ph.IDPHUHUYNH";
+        String sql = "SELECT ct.IDHOCSINH, hs.HOTENHOCSINH, "
+                   + "ct.IDPHUHUYNH, ph.TENPHUHUYNH, "
+                   + "ct.NGUOIGIAMHO "
+                   + "FROM CHITIETNGUOIGIAMHO ct "
+                   + "JOIN HOCSINH hs ON ct.IDHOCSINH = hs.IDHOCSINH "
+                   + "JOIN PHUHUYNH ph ON ct.IDPHUHUYNH = ph.IDPHUHUYNH";
 
         try {
-            ResultSet rs = dataHelper.executeQuery(query);
+            ResultSet rs = dataHelper.executeQuery(sql);
             while (rs.next()) {
-                list.add(new ChitietNGHDTO(rs));
+                ChitietNGHDTO dto = new ChitietNGHDTO();
+                dto.setIDHOCSINH(rs.getString("IDHOCSINH"));
+                dto.setHOTENHOCSINH(rs.getString("HOTENHOCSINH"));
+                dto.setIDPHUHUYNH(rs.getString("IDPHUHUYNH"));
+                dto.setTENPHUHUYNH(rs.getString("TENPHUHUYNH"));
+                dto.setNGUOIGIAMHO(rs.getString("NGUOIGIAMHO"));
+                list.add(dto);
             }
         } catch (SQLException e) {
-            System.out.println("Lỗi load chi tiết NGH: " + e.getMessage());
+            e.printStackTrace();
         }
-
         return list;
     }
 
     // ========== Thêm ==========
     public void themChitietNGH(String idHocSinh, String idPhuHuynh, String nguoiGiamHo) {
-        String query = "INSERT INTO CHITIETNGUOIGIAMHO (IDHOCSINH, IDPHUHUYNH, NGUOIGIAMHO) "
-                     + "VALUES (?, ?, ?)";
+        System.out.println("ID HS: " + idHocSinh);
+        System.out.println("ID PH: " + idPhuHuynh);
 
+        String sql = "INSERT INTO CHITIETNGUOIGIAMHO (IDHOCSINH, IDPHUHUYNH, NGUOIGIAMHO) VALUES (?, ?, ?)";
         Object[] params = { idHocSinh, idPhuHuynh, nguoiGiamHo };
 
         try {
-            dataHelper.executeUpdate(query, params);
+            dataHelper.executeUpdate(sql, params);
+            System.out.println("Thêm thành công");
         } catch (SQLException e) {
-            System.out.println("Lỗi thêm chi tiết NGH: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     // ========== Sửa ==========
     public void suaChitietNGH(String idHocSinh, String idPhuHuynh, String nguoiGiamHo) {
-        String query = "UPDATE CHITIETNGUOIGIAMHO SET NGUOIGIAMHO = ? "
-                     + "WHERE IDHOCSINH = ? AND IDPHUHUYNH = ?";
-
+        String sql = "UPDATE CHITIETNGUOIGIAMHO SET NGUOIGIAMHO=? "
+                   + "WHERE IDHOCSINH=? AND IDPHUHUYNH=?";
         Object[] params = { nguoiGiamHo, idHocSinh, idPhuHuynh };
-
         try {
-            dataHelper.executeUpdate(query, params);
+            dataHelper.executeUpdate(sql, params);
         } catch (SQLException e) {
-            System.out.println("Lỗi sửa chi tiết NGH: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     // ========== Xóa ==========
     public void xoaChitietNGH(String idHocSinh, String idPhuHuynh) {
-        String query = "DELETE FROM CHITIETNGUOIGIAMHO "
-                     + "WHERE IDHOCSINH = ? AND IDPHUHUYNH = ?";
-
+        String sql = "DELETE FROM CHITIETNGUOIGIAMHO WHERE IDHOCSINH=? AND IDPHUHUYNH=?";
         Object[] params = { idHocSinh, idPhuHuynh };
-
         try {
-            dataHelper.executeUpdate(query, params);
+            dataHelper.executeUpdate(sql, params);
         } catch (SQLException e) {
-            System.out.println("Lỗi xóa chi tiết NGH: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
     // ========== Tìm kiếm ==========
     public List<ChitietNGHDTO> getNguoiGiamHoByTenID(String timKiem) {
-        List<ChitietNGHDTO> list = new ArrayList<>();
 
-        String query = "SELECT ct.IDHOCSINH, hs.HOTENHOCSINH, "
-                     + "ct.IDPHUHUYNH, ph.TENPHUHUYNH, "
-                     + "ct.NGUOIGIAMHO "
-                     + "FROM CHITIETNGUOIGIAMHO ct "
-                     + "JOIN HOCSINH hs ON ct.IDHOCSINH = hs.IDHOCSINH "
-                     + "JOIN PHUHUYNH ph ON ct.IDPHUHUYNH = ph.IDPHUHUYNH "
-                     + "WHERE LOWER(hs.HOTENHOCSINH) LIKE ? "
-                     + "OR LOWER(ph.TENPHUHUYNH) LIKE ? "
-                     + "OR LOWER(ct.NGUOIGIAMHO) LIKE ?";
+        List<ChitietNGHDTO> list = new ArrayList<ChitietNGHDTO>();
+
+        String sql = "SELECT ct.IDHOCSINH, hs.HOTENHOCSINH, "
+                   + "ct.IDPHUHUYNH, ph.TENPHUHUYNH, "
+                   + "ct.NGUOIGIAMHO "
+                   + "FROM CHITIETNGUOIGIAMHO ct "
+                   + "JOIN HOCSINH hs ON ct.IDHOCSINH = hs.IDHOCSINH "
+                   + "JOIN PHUHUYNH ph ON ct.IDPHUHUYNH = ph.IDPHUHUYNH "
+                   + "WHERE LOWER(hs.HOTENHOCSINH) LIKE ? "
+                   + "OR LOWER(ph.TENPHUHUYNH) LIKE ? "
+                   + "OR LOWER(ct.NGUOIGIAMHO) LIKE ?";
 
         String key = "%" + timKiem.toLowerCase() + "%";
         Object[] params = { key, key, key };
 
         try {
-            ResultSet rs = dataHelper.executeQuery(query, params);
+            ResultSet rs = dataHelper.executeQuery(sql, params);
             while (rs.next()) {
-                list.add(new ChitietNGHDTO(rs));
+
+                ChitietNGHDTO dto = new ChitietNGHDTO();
+                dto.setIDHOCSINH(rs.getString("IDHOCSINH"));
+                dto.setHOTENHOCSINH(rs.getString("HOTENHOCSINH"));
+                dto.setIDPHUHUYNH(rs.getString("IDPHUHUYNH"));
+                dto.setTENPHUHUYNH(rs.getString("TENPHUHUYNH"));
+                dto.setNGUOIGIAMHO(rs.getString("NGUOIGIAMHO"));
+
+                list.add(dto);
             }
         } catch (SQLException e) {
-            System.out.println("Lỗi tìm chi tiết NGH: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return list;
     }
+
 }

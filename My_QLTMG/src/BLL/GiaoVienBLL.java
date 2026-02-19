@@ -47,13 +47,19 @@ public class GiaoVienBLL {
         );
     }
 
-    // Xóa
-    public void xoa(String idGiaoVien) {
-        giaoVienDAL.xoaGiaoVien(idGiaoVien);
+    
+ // Xóa
+    public boolean xoa(String idGiaoVien) {
+        return giaoVienDAL.xoaGiaoVien(idGiaoVien);
     }
+
 
     // Tìm
     public List<GiaoVienDTO> tim(String key) {
         return giaoVienDAL.getGiaoVienByTenID(key);
+    }
+ // Lấy giáo viên đang có lớp (đúng nghiệp vụ)
+    public List<GiaoVienDTO> getGiaoVienDangCoLop() {
+        return giaoVienDAL.loadGiaoVienDangCoLop();
     }
 }

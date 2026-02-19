@@ -28,6 +28,9 @@ public class HocSinhBLL {
         }
         return list;
     }
+    public List<HocSinhDTO> getAll() {
+        return getHocSinhList();
+    }
 
     // ==============================
     // THÊM HỌC SINH
@@ -98,5 +101,12 @@ public class HocSinhBLL {
             throw new Exception("Ngày sinh phải đúng định dạng dd/MM/yyyy (vd: 06/04/04)");
         }
     }
+    public List<HocSinhDTO> getHocSinhTheoLop(String idLop) {
+        if (idLop == null || idLop.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return hocSinhDAL.getHocSinhTheoLop(idLop);
+    }
+    
 
 }

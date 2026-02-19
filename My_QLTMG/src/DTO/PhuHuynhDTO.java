@@ -92,6 +92,7 @@ public class PhuHuynhDTO {
     }
     @Override
     public String toString() {
-        return HOTENHOCSINH; // để combobox hiển thị tên
+        return TENPHUHUYNH;
     }
+    
 }

@@ -27,6 +27,10 @@ public class PhuHuynhBLL {
         }
         return list;
     }
+    public List<PhuHuynhDTO> getAll() {
+        return phuHuynhDAL.getAllPhuHuynh();   
+    }
+
 
     // ==============================
     // LẤY DANH SÁCH HỌC SINH (COMBOBOX)

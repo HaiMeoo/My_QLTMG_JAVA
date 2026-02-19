@@ -6,6 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+
 public class GiaoVienDAL {
 
     private DataHelper dataHelper;
@@ -61,17 +62,16 @@ public class GiaoVienDAL {
     }
 
     // ========== Xóa giáo viên ==========
-    public void xoaGiaoVien(String idGiaoVien) {
+    public boolean xoaGiaoVien(String idGiaoVien) {
 
         String query = "DELETE FROM GIAOVIEN WHERE IDGIAOVIEN = ?";
 
         try {
             int rowsAffected = dataHelper.executeUpdate(query, new Object[]{idGiaoVien});
-            if (rowsAffected == 0) {
-                System.out.println("Không tìm thấy giáo viên cần xóa.");
-            }
+            return rowsAffected > 0;   // 🔥 RẤT QUAN TRỌNG
         } catch (SQLException e) {
             System.out.println("Lỗi khi xóa giáo viên: " + e.getMessage());
+            return false;
         }
     }
 
@@ -119,6 +119,27 @@ public class GiaoVienDAL {
             }
         } catch (SQLException e) {
             System.out.println("Lỗi tìm giáo viên: " + e.getMessage());
+        }
+
+        return list;
+    }
+ // ========== Load giáo viên đang có lớp ==========
+    public List<GiaoVienDTO> loadGiaoVienDangCoLop() {
+        List<GiaoVienDTO> list = new ArrayList<>();
+
+        String query =
+            "SELECT DISTINCT gv.IDGIAOVIEN, gv.HOTENGIAOVIEN, gv.GIOITINH, gv.NGAYSINH, " +
+            "gv.DIACHI, gv.CCCD, gv.SDT " +
+            "FROM GIAOVIEN gv " +
+            "JOIN LOPHOC lh ON gv.IDGIAOVIEN = lh.IDGIAOVIEN";
+
+        try {
+            ResultSet rs = dataHelper.executeQuery(query);
+            while (rs.next()) {
+                list.add(new GiaoVienDTO(rs));
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi load giáo viên đang có lớp: " + e.getMessage());
         }
 
         return list;

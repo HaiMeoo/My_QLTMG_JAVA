@@ -14,18 +14,22 @@ public class LopHocBLL {
     }
 
     // ========== Lấy danh sách lớp học ==========
-    public List<LopHocDTO> getLopHocList() {
-        List<LopHocDTO> lopHocList = lopHocDAL.loadLopHocList();
-        if (lopHocList == null || lopHocList.isEmpty()) {
-            System.out.println("Danh sách lớp học trống.");
-        }
-        return lopHocList;
+    public List<LopHocDTO> getAll() {
+        return lopHocDAL.loadLopHocList();
     }
 
     // ========== Thêm lớp học ==========
     public void themLopHoc(String idLop, String tenLop, int siSo, String idGiaoVien) {
         if (isNullOrEmpty(idLop) || isNullOrEmpty(tenLop) || isNullOrEmpty(idGiaoVien)) {
             throw new IllegalArgumentException("Thông tin lớp học không được để trống.");
+            
+        }
+        if (lopHocDAL.kiemTraTrungMa(idLop)) {
+            throw new RuntimeException("❌ Mã lớp đã tồn tại!");
+        }
+
+        if (lopHocDAL.kiemTraTrungTen(tenLop)) {
+            throw new RuntimeException("❌ Tên lớp đã tồn tại!");
         }
 
         lopHocDAL.themLopHoc(idLop, tenLop, siSo, idGiaoVien);
@@ -50,7 +54,9 @@ public class LopHocBLL {
         if (isNullOrEmpty(idLop) || isNullOrEmpty(tenLop) || isNullOrEmpty(idGiaoVien)) {
             throw new IllegalArgumentException("Thông tin lớp học không được để trống.");
         }
-
+        if (lopHocDAL.kiemTraTrungTenKhiSua(tenLop, idLop)) {
+            throw new RuntimeException("❌ Tên lớp đã tồn tại!");
+        }
         lopHocDAL.suaLopHoc(idLop, tenLop, siSo, idGiaoVien);
     }
 
@@ -67,4 +73,7 @@ public class LopHocBLL {
     private boolean isNullOrEmpty(String value) {
         return value == null || value.trim().isEmpty();
     }
+
+
+
 }
