@@ -43,6 +43,7 @@ public class ChitietNGHDAL {
         }
         return list;
     }
+    
 
     // ========== Thêm ==========
     public void themChitietNGH(String idHocSinh, String idPhuHuynh, String nguoiGiamHo) {
@@ -119,5 +120,6 @@ public class ChitietNGHDAL {
 
         return list;
     }
+    
 
 }

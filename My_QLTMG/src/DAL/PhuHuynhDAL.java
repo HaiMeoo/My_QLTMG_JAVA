@@ -37,7 +37,7 @@ public class PhuHuynhDAL {
                         rs.getString("IDPHUHUYNH"),
                         rs.getString("TENPHUHUYNH"),
                         rs.getString("SDT"),
-                        rs.getString("EMAIL"),
+                        rs.getString("EMAIL"),	
                         rs.getString("DIACHI"),
                         rs.getString("IDHOCSINH"),
                         rs.getString("HOTENHOCSINH")

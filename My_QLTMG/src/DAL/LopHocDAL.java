@@ -183,5 +183,24 @@ public class LopHocDAL {
         }
         return false;
     }
+    public List<LopHocDTO> getLopTheoGiaoVien(String idGV) {
+
+        List<LopHocDTO> list = new ArrayList<>();
+
+        String query = "SELECT * FROM LOPHOC WHERE IDGIAOVIEN = ?";
+
+        try {
+            ResultSet rs = dataHelper.executeQuery(query, new Object[]{idGV});
+
+            while (rs.next()) {
+                list.add(new LopHocDTO(rs));
+            }
+
+        } catch (Exception e) {
+            System.out.println("Lỗi load lớp theo giáo viên: " + e.getMessage());
+        }
+
+        return list;
+    }
 
 }

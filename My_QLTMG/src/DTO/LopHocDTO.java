@@ -21,7 +21,6 @@ public class LopHocDTO {
         this.TENLOP = rs.getString("TENLOP");
         this.SISO = rs.getInt("SISO");
         this.IDGIAOVIEN = rs.getString("IDGIAOVIEN");
-        this.HOTENGIAOVIEN = rs.getString("HOTENGIAOVIEN");
     }
 
     // Constructor đầy đủ tham số

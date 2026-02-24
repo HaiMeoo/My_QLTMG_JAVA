@@ -62,4 +62,7 @@ public class GiaoVienBLL {
     public List<GiaoVienDTO> getGiaoVienDangCoLop() {
         return giaoVienDAL.loadGiaoVienDangCoLop();
     }
+    public GiaoVienDTO getGiaoVienTheoLop(String idLop) {
+        return giaoVienDAL.getGiaoVienTheoLop(idLop);
+    }
 }

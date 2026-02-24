@@ -15,6 +15,7 @@ public class ChitietNGHBLL {
     public List<ChitietNGHDTO> getChitietNGHList() {
         return chitietNGHDAL.loadChitietNGHList();
     }
+    
 
     public void themChitietNGH(String idHocSinh, String idPhuHuynh, String nguoiGiamHo) {
         if (idHocSinh.isEmpty() || idPhuHuynh.isEmpty() || nguoiGiamHo.isEmpty()) {

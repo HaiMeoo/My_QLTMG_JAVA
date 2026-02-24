@@ -19,6 +19,22 @@ public class DataHelper {
             Class.forName("com.mysql.cj.jdbc.Driver");
             connection = DriverManager.getConnection(DB_URL, USER_NAME, PASSWORD);
             System.out.println("✓ Kết nối MySQL thành công!");
+            System.out.println("DB URL: " + DB_URL);
+
+            // ===== KIỂM TRA DATABASE HIỆN TẠI =====
+            Statement st = connection.createStatement();
+
+            ResultSet rsDB = st.executeQuery("SELECT DATABASE()");
+            if (rsDB.next()) {
+                System.out.println("Đang dùng database: " + rsDB.getString(1));
+            }
+
+            // ===== KIỂM TRA SỐ LƯỢNG GIÁO VIÊN =====
+            ResultSet rsCount = st.executeQuery("SELECT COUNT(*) FROM giaovien");
+            if (rsCount.next()) {
+                System.out.println("Count GV trong Java: " + rsCount.getInt(1));
+            }
+
         } catch (Exception e) {
             System.err.println("✗ Lỗi kết nối MySQL!");
             e.printStackTrace();

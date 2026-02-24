@@ -98,41 +98,6 @@ public class MainForm extends JFrame {
 		    "Lớp",
 		    "Giáo viên"
 		};
-	private void loadComboGVCN() {
-	    DefaultComboBoxModel<GiaoVienDTO> model = new DefaultComboBoxModel<>();
-
-	    List<GiaoVienDTO> listGV = giaoVienBLL.getGiaoVienDangCoLop();
-
-	    for (GiaoVienDTO gv : listGV) {
-	        model.addElement(gv);
-	    }
-
-	    cbGVCN.setModel(model);
-	}
-	private void loadComboLopHoc() {
-	    if (cbLopHocHocSinh == null) return;
-
-	    DefaultComboBoxModel<LopHocDTO> model = new DefaultComboBoxModel<>();
-
-	    List<LopHocDTO> list = lopHocBLL.getAll(); 
-
-	    for (LopHocDTO lop : list) {
-	        model.addElement(lop);
-	    }
-
-	    cbLopHocHocSinh.setModel(model);
-	}
-
-	private void loadComboHocSinhPhuHuynh() {
-	    DefaultComboBoxModel<HocSinhDTO> model = new DefaultComboBoxModel<>();
-
-	    for (HocSinhDTO hs : hocSinhBLL.getHocSinhList()) {
-	        model.addElement(hs);
-	    }
-
-	    cbTenHocSinhPH.setModel(model);
-	}
-	
 	private void initComponents() {
 	    setTitle("Main Form");
 	    setSize(1200, 700);
@@ -152,6 +117,15 @@ public class MainForm extends JFrame {
 	    panelLopHoc.add(cbGVCN);
 
 	    tabbedPane.addTab("Lớp học", panelLopHoc);
+	 // ================= TAB HỌC SINH =================
+	    JPanel panelHocSinh = new JPanel();
+	    panelHocSinh.setLayout(null);
+
+	    cbLopHocHocSinh = new JComboBox<>();
+	    cbLopHocHocSinh.setBounds(150, 80, 200, 25);
+	    panelHocSinh.add(cbLopHocHocSinh);
+
+	    tabbedPane.addTab("Học Sinh", panelHocSinh);
 
 	 // ================= TAB ĐIỂM DANH =================
 	    JPanel panelDiemDanh = new JPanel();
@@ -284,8 +258,8 @@ public class MainForm extends JFrame {
         giaoVienBLL = new GiaoVienBLL();
         phuHuynhBLL = new PhuHuynhBLL();
     	initComponents(); 
-    	initLichDay();	
         initTableNguoiGiamHo();
+        initTabReload();
         initBaoCaoSucKhoe();
         initTabDiemDanhEvent();
         initComboDiemDanhEvent();
@@ -295,9 +269,6 @@ public class MainForm extends JFrame {
         	        "Tình trạng", "Học sinh", "Lớp", "Giáo viên"
         	    }, 0
         	);
-
-
-
         modelDD = new DefaultTableModel(
             new Object[]{
                 "Mã điểm danh",
@@ -321,8 +292,10 @@ public class MainForm extends JFrame {
             loadDanhSachNguoiGiamHo();
         	loadComboGVCN(); 
         	loadComboHocSinhPhuHuynh();
+        	loadComboLopHocHocSinh();
+        	loadComboBoxLopLichDay();
+        	loadComboBoxGiaoVienSK();
         });
-
     	 tabbedPane.addChangeListener(e -> {
     	        int index = tabbedPane.getSelectedIndex();
     	        String title = tabbedPane.getTitleAt(index);
@@ -331,6 +304,13 @@ public class MainForm extends JFrame {
     	            loadComboGVCN();
     	        }
     	    });
+    	 tabbedPane.addChangeListener(e -> {
+    		    if (tabbedPane.getTitleAt(tabbedPane.getSelectedIndex())
+    		            .equals("Học Sinh")) {
+
+    		    	loadComboLopHocHocSinh();
+    		    }
+    		});
     	
         fixComboBoxWidth(cbGVCN);
         
@@ -551,7 +531,8 @@ public class MainForm extends JFrame {
 
 
                 loadTableGV();       
-                loadComboGVCN();    
+                loadComboGVCN();
+                loadComboBoxLopDiemDanh();
 
                 JOptionPane.showMessageDialog(null, "Thêm giáo viên thành công!");
 
@@ -704,12 +685,6 @@ public class MainForm extends JFrame {
             txtTimGV.setText("");
             tableGV.clearSelection();
         });
-
-
-
-
-
-
 
      // ================= TAB LỚP HỌC =================
         pLophoc = new JPanel();
@@ -905,7 +880,9 @@ public class MainForm extends JFrame {
                 loadTableLop.run();
                 loadComboGVCN();      
                 loadComboHocSinhPhuHuynh();
-                loadComboLopHoc();
+                loadComboLopHocHocSinh();
+                loadComboBoxLopDiemDanh();
+                
                 JOptionPane.showMessageDialog(null, "Thêm lớp học thành công!");
                 txtTimLop.setText("");     // reset tìm kiếm
                 tableLop.clearSelection();
@@ -970,6 +947,7 @@ public class MainForm extends JFrame {
                 );
 
                 loadTableLop.run();
+                loadComboLopHocHocSinh();
                 JOptionPane.showMessageDialog(null, "Cập nhật lớp học thành công!");
                 txtTimLop.setText("");     // reset tìm kiếm
                 tableLop.clearSelection();
@@ -1004,9 +982,9 @@ public class MainForm extends JFrame {
                 String maLop = modelLop.getValueAt(row, 0).toString();
                 lopHocBLL.xoaLopHoc(maLop);
                 loadTableLop.run();
-                loadComboLopHoc();
                 loadComboGVCN();
                 loadComboHocSinhPhuHuynh();
+                loadComboLopHocHocSinh();
 
                 JOptionPane.showMessageDialog(null, "🗑️ Xóa lớp học thành công!");
                 txtTimLop.setText("");
@@ -1250,6 +1228,9 @@ public class MainForm extends JFrame {
                 hocSinhBLL.themHocSinh(hs);
                 loadTableHS.run();
                 loadComboHocSinhPhuHuynh();
+                loadComboBoxHocSinhDiemDanh(
+                	    ((LopHocDTO) cbChonlophsDD.getSelectedItem()).getIDLOP()
+                		);
                 JOptionPane.showMessageDialog(null, "Thêm học sinh thành công!");
 
             } catch (Exception ex) {
@@ -1324,6 +1305,7 @@ public class MainForm extends JFrame {
 
                 hocSinhBLL.suaHocSinh(hs);
                 loadTableHS.run();
+                loadComboHocSinhPhuHuynh();
 
                 JOptionPane.showMessageDialog(null, "Cập nhật học sinh thành công!");
 
@@ -1359,6 +1341,7 @@ public class MainForm extends JFrame {
                 try {
                     hocSinhBLL.xoaHocSinh(maHS);
                     loadTableHS.run();
+                    loadComboHocSinhPhuHuynh();
 
                     JOptionPane.showMessageDialog(null, "Xóa học sinh thành công!");
 
@@ -1410,8 +1393,6 @@ public class MainForm extends JFrame {
         tabbedPane.addTab("Phụ huynh", pPhuhuynh);
         pPhuhuynh.setLayout(null);
 
-        // ===== BLL =====
-        PhuHuynhBLL phuHuynhBLL = new PhuHuynhBLL();
 
         // ================== PANEL THÔNG TIN ==================
         JPanel panelPH_Info = new JPanel(null);
@@ -1446,7 +1427,7 @@ public class MainForm extends JFrame {
 
         // --- Học sinh ---
         panelPH_Info.add(new JLabel("Tên học sinh:")).setBounds(360, 30, 100, 15);
-        JComboBox<HocSinhDTO> cbChonphHS = new JComboBox<>();
+        cbChonphHS = new JComboBox<>();
         cbChonphHS.setBounds(470, 27, 200, 22);
         panelPH_Info.add(cbChonphHS);
 
@@ -1506,13 +1487,6 @@ public class MainForm extends JFrame {
         scrollPH.setBounds(10, 22, 703, 288);
         panelPH_Table.add(scrollPH);
 
-        // ================== LOAD COMBO HỌC SINH ==================
-        Runnable loadComboHocSinhPH = () -> {
-            cbChonphHS.removeAllItems();
-            for (HocSinhDTO hs : phuHuynhBLL.getDanhSachHocSinh()) {
-                cbChonphHS.addItem(hs);
-            }
-        };
 
         // ================== LOAD TABLE ==================
         Runnable loadTablePH = () -> {
@@ -1529,8 +1503,6 @@ public class MainForm extends JFrame {
             }
         };
 
-        // LOAD BAN ĐẦU
-        loadComboHocSinhPH.run();
         loadTablePH.run();
 
         // ================== SỰ KIỆN ==================
@@ -1580,6 +1552,7 @@ public class MainForm extends JFrame {
                 );
 
                 loadTablePH.run();
+                
 
             } catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(
@@ -2126,7 +2099,9 @@ public class MainForm extends JFrame {
         cbChonlophsDD.addActionListener(e -> {
             LopHocDTO lop = (LopHocDTO) cbChonlophsDD.getSelectedItem();
             if (lop != null) {
+
                 loadComboBoxHocSinhDiemDanh(lop.getIDLOP());
+                loadComboBoxGiaoVienTheoLop(lop.getIDLOP());
             }
         });
 
@@ -2418,6 +2393,14 @@ public class MainForm extends JFrame {
         cbChonLopLD = new JComboBox<>();
         cbChonLopLD.setBounds(443, 112, 113, 22);
         panel_2_1_1_1.add(cbChonLopLD);
+        cbChonLopLD.addActionListener(e -> {
+
+            LopHocDTO lop = (LopHocDTO) cbChonLopLD.getSelectedItem();
+
+            if (lop != null) {
+                loadGiaoVienTheoLopLichDay(lop.getIDLOP());
+            }
+        });
         
         JPanel panel_1_2_1_1_1 = new JPanel();
         panel_1_2_1_1_1.setLayout(null);
@@ -2798,6 +2781,14 @@ public class MainForm extends JFrame {
         cbChonlopSK = new JComboBox<>();
         cbChonlopSK.setBounds(443, 86, 113, 22);
         panel_2_1_1_1_1.add(cbChonlopSK);
+        cbChonlopSK.addActionListener(e -> {
+
+            LopHocDTO lop = (LopHocDTO) cbChonlopSK.getSelectedItem();
+
+            if (lop != null) {
+                loadHocSinhTheoLop(lop.getIDLOP());
+            }
+        });
         
         txtNgaykham = new JTextField();
         txtNgaykham.setBounds(126, 58, 201, 20);
@@ -2810,6 +2801,14 @@ public class MainForm extends JFrame {
         cbChongvSK = new JComboBox<>();
         cbChongvSK.setBounds(443, 112, 113, 22);
         panel_2_1_1_1_1.add(cbChongvSK);
+        cbChongvSK.addActionListener(e -> {
+
+            GiaoVienDTO gv = (GiaoVienDTO) cbChongvSK.getSelectedItem();
+
+            if (gv != null) {
+                loadLopTheoGiaoVien(gv.getIdGiaoVien());
+            }
+        });
         
         JLabel lblMaGV_1_1_1_1_1_2_1 = new JLabel("Tên học sinh:");
         lblMaGV_1_1_1_1_1_2_1.setBounds(353, 57, 80, 15);
@@ -3337,6 +3336,17 @@ public class MainForm extends JFrame {
             return ngayNhap;
         }
     }
+	private void loadComboGVCN() {
+	    DefaultComboBoxModel<GiaoVienDTO> model = new DefaultComboBoxModel<>();
+
+	    List<GiaoVienDTO> listGV = giaoVienBLL.getGiaoVienDangCoLop();
+
+	    for (GiaoVienDTO gv : listGV) {
+	        model.addElement(gv);
+	    }
+
+	    cbGVCN.setModel(model);
+	}
     private void loadTableGV() {
         modelGV.setRowCount(0);
         for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
@@ -3350,6 +3360,41 @@ public class MainForm extends JFrame {
                 gv.getSdt()
             });
         }
+    }
+    private void loadComboLopHocHocSinh() {
+
+        DefaultComboBoxModel<LopHocDTO> model =
+                new DefaultComboBoxModel<>();
+
+        for (LopHocDTO lop : lopHocBLL.getAll()) {
+            model.addElement(lop);
+        }
+
+        cbLopHocHocSinh.setModel(model);
+    }
+    private void initTabReload() {
+        tabbedPane.addChangeListener(e -> {
+            int index = tabbedPane.getSelectedIndex();
+            if (index == -1) return;
+
+            String title = tabbedPane.getTitleAt(index);
+
+            if ("Học Sinh".equals(title)) {
+            	loadComboLopHocHocSinh();
+            }
+        });
+    }
+    private void loadComboHocSinhPhuHuynh() {
+
+        DefaultComboBoxModel<HocSinhDTO> model = new DefaultComboBoxModel<>();
+
+        List<HocSinhDTO> list = phuHuynhBLL.getDanhSachHocSinh();
+
+        for (HocSinhDTO hs : list) {
+            model.addElement(hs);
+        }
+
+        cbChonphHS.setModel(model);
     }
     
     private void loadDanhSachDiemDanh() {
@@ -3410,6 +3455,24 @@ public class MainForm extends JFrame {
             }
         });
     }
+    private void loadComboBoxGiaoVienTheoLop(String idLop) {
+
+        cbChonGVDD.removeAllItems();
+
+        GiaoVienDTO gv = giaoVienBLL.getGiaoVienTheoLop(idLop);
+
+        if (gv != null) {
+            cbChonGVDD.addItem(gv);
+        }
+
+        // QUAN TRỌNG: cho phép chọn lại
+        cbChonGVDD.setEnabled(true);
+
+        // Tự chọn item đầu tiên
+        if (cbChonGVDD.getItemCount() > 0) {
+            cbChonGVDD.setSelectedIndex(0);
+        }
+    }
 
     private void loadDanhSachLichDay() {
         if (modelLD == null) return; 
@@ -3425,6 +3488,53 @@ public class MainForm extends JFrame {
                 ld.getHOTENGIAOVIEN(),
                 ld.getTENLOP()
             });
+        }
+    }
+    private void loadComboBoxLichDay() {
+
+        cbChonGVLD.removeAllItems();
+
+        List<GiaoVienDTO> listGV = giaoVienBLL.getAll();
+        System.out.println("List GV size: " + listGV.size());
+
+        for (GiaoVienDTO gv : listGV) {
+            cbChonGVLD.addItem(gv);
+        }
+
+        System.out.println("Item count GV sau khi load: " + cbChonGVLD.getItemCount());
+
+        cbChonLopLD.removeAllItems();
+
+        List<LopHocDTO> listLop = lopHocBLL.getAll();
+        System.out.println("List Lop size: " + listLop.size());
+
+        for (LopHocDTO lop : listLop) {
+            cbChonLopLD.addItem(lop);
+        }
+
+        System.out.println("Item count Lop sau khi load: " + cbChonLopLD.getItemCount());
+    }
+    
+    private void loadComboBoxLopLichDay() {
+
+        cbChonLopLD.removeAllItems();
+
+        for (LopHocDTO lop : lopHocBLL.getAll()) {
+            cbChonLopLD.addItem(lop);
+        }
+
+        if (cbChonLopLD.getItemCount() > 0) {
+            cbChonLopLD.setSelectedIndex(0);
+        }
+    }
+    private void loadGiaoVienTheoLopLichDay(String idLop) {
+
+        cbChonGVLD.removeAllItems();
+
+        GiaoVienDTO gv = giaoVienBLL.getGiaoVienTheoLop(idLop);
+
+        if (gv != null) {
+            cbChonGVLD.addItem(gv);
         }
     }
     private void loadDanhSachBaoCaoSucKhoe() {
@@ -3446,7 +3556,61 @@ public class MainForm extends JFrame {
             });
         }
     }
+    private void loadLopTheoGiaoVien(String idGV) {
+
+        cbChonlopSK.removeAllItems();
+
+        List<LopHocDTO> list = lopHocBLL.getLopTheoGiaoVien(idGV);
+
+        for (LopHocDTO lop : list) {
+            cbChonlopSK.addItem(lop);
+        }
+
+        if (cbChonlopSK.getItemCount() > 0) {
+            cbChonlopSK.setSelectedIndex(0);
+        }
+    }
+    private void loadHocSinhTheoLop(String idLop) {
+
+        cbChonHSSK.removeAllItems();
+
+        for (HocSinhDTO hs : hocSinhBLL.getHocSinhTheoLop(idLop)) {
+            cbChonHSSK.addItem(hs);
+        }
+    }
+    private void loadComboBoxGiaoVienSK() {
+
+        cbChongvSK.removeAllItems();
+
+        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
+            cbChongvSK.addItem(gv);
+        }
+
+        if (cbChongvSK.getItemCount() > 0) {
+            cbChongvSK.setSelectedIndex(0);
+        }
+    }
     private void initBaoCaoSucKhoe() {
+    }
+    private void loadComboBoxBCSK() {
+
+        // ===== Load Lớp =====
+        cbChonlopSK.removeAllItems();
+        for (LopHocDTO lop : lopHocBLL.getAll()) {
+            cbChonlopSK.addItem(lop);
+        }
+
+        // ===== Load Giáo Viên =====
+        cbChongvSK.removeAllItems();
+        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
+            cbChongvSK.addItem(gv);
+        }
+
+        // ===== Load Học Sinh =====
+        cbChonHSSK.removeAllItems();
+        for (HocSinhDTO hs : hocSinhBLL.getAll()) {
+            cbChonHSSK.addItem(hs);
+        }
     }
     private void loadDanhSachNguoiGiamHo() {
         modelNGH.setRowCount(0);
@@ -3478,44 +3642,8 @@ public class MainForm extends JFrame {
         scrollingNGH.setBounds(10, 21, 677, 288);
 
     }
-    private void loadComboBoxLichDay() {
-    	System.out.println("Item count GV: " + cbChonGVLD.getItemCount());
-        // ===== Load Giáo viên =====
-        cbChonGVLD.removeAllItems();
-        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
-            cbChonGVLD.addItem(gv);
-        }
 
-        // ===== Load Lớp học =====
-        cbChonLopLD.removeAllItems();
-        for (LopHocDTO lop : lopHocBLL.getAll()) {
-            cbChonLopLD.addItem(lop);
-        }
-    }	
-    private void initLichDay() {
-        cbChonGVLD = new JComboBox<>();
-        cbChonLopLD = new JComboBox<>();
-    }
-    private void loadComboBoxBCSK() {
 
-        // ===== Load Lớp =====
-        cbChonlopSK.removeAllItems();
-        for (LopHocDTO lop : lopHocBLL.getAll()) {
-            cbChonlopSK.addItem(lop);
-        }
-
-        // ===== Load Giáo Viên =====
-        cbChongvSK.removeAllItems();
-        for (GiaoVienDTO gv : giaoVienBLL.getAll()) {
-            cbChongvSK.addItem(gv);
-        }
-
-        // ===== Load Học Sinh =====
-        cbChonHSSK.removeAllItems();
-        for (HocSinhDTO hs : hocSinhBLL.getAll()) {
-            cbChonHSSK.addItem(hs);
-        }
-    }
     private void loadComboBoxNGH() {
 
         DefaultComboBoxModel<HocSinhDTO> modelHS = new DefaultComboBoxModel<>();
@@ -3531,7 +3659,4 @@ public class MainForm extends JFrame {
         }
         cbChonphGHhs.setModel(modelPH);
     }
-
-
-
 }

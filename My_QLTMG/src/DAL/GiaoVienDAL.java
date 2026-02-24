@@ -144,4 +144,25 @@ public class GiaoVienDAL {
 
         return list;
     }
+ // ========== Lấy giáo viên theo lớp ==========
+    public GiaoVienDTO getGiaoVienTheoLop(String idLop) {
+
+        String query =
+            "SELECT gv.IDGIAOVIEN, gv.HOTENGIAOVIEN, gv.GIOITINH, " +
+            "gv.NGAYSINH, gv.DIACHI, gv.CCCD, gv.SDT " +
+            "FROM GIAOVIEN gv " +
+            "JOIN LOPHOC lh ON gv.IDGIAOVIEN = lh.IDGIAOVIEN " +
+            "WHERE lh.IDLOP = ?";
+
+        try {
+            ResultSet rs = dataHelper.executeQuery(query, new Object[]{idLop});
+            if (rs.next()) {
+                return new GiaoVienDTO(rs);
+            }
+        } catch (SQLException e) {
+            System.out.println("Lỗi load giáo viên theo lớp: " + e.getMessage());
+        }
+
+        return null;
+    }
 }

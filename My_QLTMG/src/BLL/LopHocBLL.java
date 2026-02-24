@@ -68,6 +68,9 @@ public class LopHocBLL {
 
         return lopHocDAL.getLopHocByTenID(timKiem);
     }
+    public List<LopHocDTO> getLopTheoGiaoVien(String idGV) {
+        return lopHocDAL.getLopTheoGiaoVien(idGV);
+    }
 
     // ========== Hàm hỗ trợ ==========
     private boolean isNullOrEmpty(String value) {
