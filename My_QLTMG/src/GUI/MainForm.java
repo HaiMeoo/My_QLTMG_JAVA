@@ -12,15 +12,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import javax.swing.JTable;
 import java.time.LocalDate;
-import javax.swing.JScrollPane;
-import javax.swing.JOptionPane;
-import javax.swing.ListSelectionModel;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+
 import javax.swing.plaf.basic.BasicComboPopup;
-import java.awt.Dimension;
 
 import BLL.TaiKhoanBLL;
 import DTO.TaiKhoanDTO;
@@ -106,6 +100,8 @@ public class MainForm extends JFrame {
 	    getContentPane().setLayout(new BorderLayout());
 
 	    tabbedPane = new JTabbedPane();
+	    
+	    
 
 	    // ================= TAB LỚP HỌC =================
 	    JPanel panelLopHoc = new JPanel();
@@ -199,6 +195,7 @@ public class MainForm extends JFrame {
     private JTextField txtSdtGV;
     private JTextField txtTimGV;
     private JComboBox<String> cbGioiTinhGV;
+    private JPanel pGiaovien;
     private JPanel pLophoc;
     private JPanel pHocsinh;
     private JPanel pPhuhuynh;
@@ -319,70 +316,182 @@ public class MainForm extends JFrame {
         getContentPane().setLayout(null);
         
         
+     // hải code dòng này tới ...
         // ================= PANEL BUTTON =================
-        
-        JPanel panel_4 = new JPanel();
-        panel_4.setBounds(0, 0, 150, 661);
-        panel_4.setBackground(new Color(250, 128, 114));
-        getContentPane().add(panel_4);
-        panel_4.setLayout(null);
-        
-        JButton btnAdmin = new JButton("Admin");
-        btnAdmin.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnAdmin.setBounds(10, 105, 130, 23);
-        panel_4.add(btnAdmin);
-        
-        JButton btnDanhsach = new JButton("Danh Sách");
-        btnDanhsach.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnDanhsach.setBounds(10, 204, 130, 23);
-        panel_4.add(btnDanhsach);
-        
-        JButton btnGiaoVien = new JButton("Giáo Viên");
-        btnGiaoVien.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnGiaoVien.setBounds(10, 274, 130, 23);
-        panel_4.add(btnGiaoVien);
-        
-        JButton btnLophoc = new JButton("Lớp Học");
-        btnLophoc.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnLophoc.setBounds(10, 325, 130, 23);
-        panel_4.add(btnLophoc);
-        
-        JButton btnHocsinh = new JButton("Học Sinh");
-        btnHocsinh.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnHocsinh.setBounds(10, 359, 130, 23);
-        panel_4.add(btnHocsinh);
-        
-        JButton btnPhuhuynh = new JButton("Phụ Huynh");
-        btnPhuhuynh.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnPhuhuynh.setBounds(10, 390, 130, 23);
-        panel_4.add(btnPhuhuynh);
-        
-        JButton btnDangxuat = new JButton("Đăng Xuất");
-        btnDangxuat.addActionListener(new ActionListener() {
-        	public void actionPerformed(ActionEvent e) {
-        	}
-        });
-        btnDangxuat.setBounds(10, 613, 130, 23);
-        panel_4.add(btnDangxuat);
+           JPanel panel_4 = new JPanel();
+           panel_4.setBounds(0, 0, 201, 696);
+           panel_4.setBackground(new Color(255, 102, 102));
+           getContentPane().add(panel_4);
+           panel_4.setLayout(null);
 
+           // ===== NÚT TÀI KHOẢN =====
+           JButton btnAdmin = new JButton("Tài khoản");
+           btnAdmin.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnAdmin.setBackground(new Color(255, 204, 204));
+           btnAdmin.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   if (tabbedPane != null && pTaikhoan != null) {
+                       tabbedPane.setSelectedComponent(pTaikhoan);
+                   } else {
+                       // Fallback: tìm bằng tên tab
+                       for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                           if ("Tài khoản".equals(tabbedPane.getTitleAt(i))) {
+                               tabbedPane.setSelectedIndex(i);
+                               break;
+                           }
+                       }
+                   }
+               }
+           });
+           btnAdmin.setBounds(0, 136, 201, 32);
+           panel_4.add(btnAdmin);
+
+           // ===== NÚT DANH SÁCH =====
+           JButton btnDanhsach = new JButton("Danh Sách");
+           btnDanhsach.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnDanhsach.setBackground(new Color(255, 204, 204));
+           btnDanhsach.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   if (tabbedPane != null && pDanhsach != null) {
+                       tabbedPane.setSelectedComponent(pDanhsach);
+                   } else {
+                       for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                           if ("Danh sách".equals(tabbedPane.getTitleAt(i))) {
+                               tabbedPane.setSelectedIndex(i);
+                               break;
+                           }
+                       }
+                   }
+               }
+           });
+           btnDanhsach.setBounds(0, 197, 201, 32);
+           panel_4.add(btnDanhsach);
+
+           // ===== NÚT GIÁO VIÊN =====
+           JButton btnGiaoVien = new JButton("Giáo Viên");
+           btnGiaoVien.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnGiaoVien.setBackground(new Color(255, 204, 204));
+           btnGiaoVien.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   if (tabbedPane != null && pGiaovien != null) {
+                       tabbedPane.setSelectedComponent(pGiaovien);
+                   } else {
+                       for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                           if ("Giáo viên".equals(tabbedPane.getTitleAt(i))) {
+                               tabbedPane.setSelectedIndex(i);
+                               break;
+                           }
+                       }
+                   }
+               }
+           });
+           btnGiaoVien.setBounds(0, 240, 201, 32);
+           panel_4.add(btnGiaoVien);
+
+           // ===== NÚT LỚP HỌC =====
+           JButton btnLophoc = new JButton("Lớp Học");
+           btnLophoc.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnLophoc.setBackground(new Color(255, 204, 204));
+           btnLophoc.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   if (tabbedPane != null && pLophoc != null) {
+                       tabbedPane.setSelectedComponent(pLophoc);
+                   } else {
+                       for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                           if ("Lớp học".equals(tabbedPane.getTitleAt(i))) {
+                               tabbedPane.setSelectedIndex(i);
+                               break;
+                           }
+                       }
+                   }
+               }
+           });
+           btnLophoc.setBounds(0, 283, 201, 32);
+           panel_4.add(btnLophoc);
+
+           // ===== NÚT HỌC SINH =====
+           JButton btnHocsinh = new JButton("Học Sinh");
+           btnHocsinh.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnHocsinh.setBackground(new Color(255, 204, 204));
+           btnHocsinh.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   if (tabbedPane != null && pHocsinh != null) {
+                       tabbedPane.setSelectedComponent(pHocsinh);
+                   } else {
+                       for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                           if ("Học sinh".equals(tabbedPane.getTitleAt(i))) {
+                               tabbedPane.setSelectedIndex(i);
+                               break;
+                           }
+                       }
+                   }
+               }
+           });
+           btnHocsinh.setBounds(0, 326, 201, 32);
+           panel_4.add(btnHocsinh);
+
+           // ===== NÚT PHỤ HUYNH =====
+           JButton btnPhuhuynh = new JButton("Phụ Huynh");
+           btnPhuhuynh.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnPhuhuynh.setBackground(new Color(255, 204, 204));
+           btnPhuhuynh.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   if (tabbedPane != null && pPhuhuynh != null) {
+                       tabbedPane.setSelectedComponent(pPhuhuynh);
+                   } else {
+                       for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                           if ("Phụ huynh".equals(tabbedPane.getTitleAt(i))) {
+                               tabbedPane.setSelectedIndex(i);
+                               break;
+                           }
+                       }
+                   }
+               }
+           });
+           btnPhuhuynh.setBounds(0, 369, 201, 32);
+           panel_4.add(btnPhuhuynh);
+
+        // ===== NÚT ĐĂNG XUẤT =====
+           JButton btnDangxuat = new JButton("Đăng Xuất");
+           btnDangxuat.setFont(new Font("Tahoma", Font.BOLD, 14));
+           btnDangxuat.setBackground(new Color(255, 204, 204));
+           btnDangxuat.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                   int confirm = JOptionPane.showConfirmDialog(
+                       MainForm.this,
+                       "Bạn có chắc chắn muốn đăng xuất?",
+                       "Xác nhận đăng xuất",
+                       JOptionPane.YES_NO_OPTION
+                   );
+                   
+                   if (confirm == JOptionPane.YES_OPTION) {
+                       // Đóng MainForm
+                       dispose();
+                       
+                       // Mở lại form đăng nhập
+                       SwingUtilities.invokeLater(new Runnable() {
+                           public void run() {
+                               // Kiểm tra xem LoginForm có tồn tại không
+                               try {
+                                   LoginForm loginForm = new LoginForm();
+                                   loginForm.setVisible(true);
+                               } catch (Exception ex) {
+                                   // Nếu không tìm thấy LoginForm, tạo một JFrame đơn giản
+                                   JOptionPane.showMessageDialog(null, 
+                                       "Đã đăng xuất thành công!\nVui lòng đóng ứng dụng.",
+                                       "Đăng xuất", 
+                                       JOptionPane.INFORMATION_MESSAGE);
+                               }
+                           }
+                       });
+                   }
+               }
+           });
+           btnDangxuat.setBounds(0, 613, 201, 37);
+           panel_4.add(btnDangxuat);
+
+           // hải code tới đây
+           
         // ================= TAB CHÍNH =================
         JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.LEFT);
         tabbedPane.setBounds(112, 50, 862, 611);
@@ -3315,6 +3424,8 @@ public class MainForm extends JFrame {
         lblNewLabel.setFont(new Font("Tahoma", Font.PLAIN, 20));
         getContentPane().add(lblNewLabel);
 
+        // hình sẽ ở đây
+        
         // ===== FRAME =====
         setTitle("Main Form");
         setSize(1010, 715);
